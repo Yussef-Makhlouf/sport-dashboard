@@ -4,6 +4,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { API_URL } from "@/lib/constants";
+import Cookies from 'js-cookie'
+
 import * as z from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -32,23 +35,74 @@ export function LoginForm() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
-
-    // في تطبيق حقيقي، ستقوم بالتحقق من بيانات الاعتماد باستخدام API
-    setTimeout(() => {
-      setIsLoading(false)
-
-      // محاكاة تسجيل دخول ناجح
+    
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+      
+      // Parse the JSON response
+      const data = await response.json();
+      console.log(data);
+      
+      if (response.ok) {
+        // Successful login
+        toast({
+          title: "تم تسجيل الدخول بنجاح",
+          description: data.message || "مرحبًا بك في لوحة تحكم إدارة الرياضة.",
+        })
+        
+        // Store user data and token if available
+        if (data.userUpdated) {
+          const userToken = data.userUpdated.token;
+          
+          // Set cookies with a 7-day expiration (or match your token expiration)
+          if (userToken) {
+            Cookies.set('token', userToken, { expires: 7, secure: true });
+          }
+          
+          // Store user data without sensitive information
+          const userData = {
+            _id: data.userUpdated._id,
+            userName: data.userUpdated.userName,
+            email: data.userUpdated.email,
+            role: data.userUpdated.role,
+            isActive: data.userUpdated.isActive,
+          };
+          
+          Cookies.set('userData', JSON.stringify(userData), { expires: 7, secure: true });
+        }
+        
+        router.push("/dashboard")
+      } else {
+        // Failed login
+        toast({
+          title: "فشل تسجيل الدخول",
+          description: data.message || "حدث خطأ أثناء تسجيل الدخول.",
+          variant: "destructive",
+        })
+        console.error("Login failed:", data)
+      }
+    } catch (error) {
       toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: "مرحبًا بك في لوحة تحكم إدارة الرياضة.",
+        title: "خطأ في الاتصال",
+        description: "حدث خطأ أثناء محاولة الاتصال بالخادم.",
+        variant: "destructive",
       })
-
-      router.push("/dashboard")
-    }, 1000)
+      console.error("Error during login:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-
+  
+  
+  
   return (
     <div className="grid gap-6">
       <Form {...form}>

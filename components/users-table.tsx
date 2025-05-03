@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   type ColumnDef,
@@ -23,47 +23,67 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { API_URL } from "@/lib/constants"
 
-// بيانات نموذجية - في تطبيق حقيقي، ستأتي هذه من API
-const data = [
-  {
-    id: "1",
-    name: "أحمد محمد",
-    email: "ahmed@example.com",
-    role: "admin",
-    avatar: "/placeholder.svg",
-    initials: "أم",
-  },
-  {
-    id: "2",
-    name: "سارة أحمد",
-    email: "sara@example.com",
-    role: "editor",
-    avatar: "/placeholder.svg",
-    initials: "سأ",
-  },
-  {
-    id: "3",
-    name: "محمد علي",
-    email: "mohamed@example.com",
-    role: "viewer",
-    avatar: "/placeholder.svg",
-    initials: "مع",
-  },
-  {
-    id: "4",
-    name: "فاطمة حسن",
-    email: "fatima@example.com",
-    role: "editor",
-    avatar: "/placeholder.svg",
-    initials: "فح",
-  },
-]
+interface User {
+  _id: string
+  userName: string
+  email: string
+  phoneNumber: string
+  role: string
+  isActive: boolean
+  createdAt: string
+}
 
 export function UsersTable() {
-  const [tableData, setTableData] = useState(data)
+  const [tableData, setTableData] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`${API_URL}/auth/getAll`)
+        
+
+        console.log(response);
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch users")
+        }
+        
+        const data = await response.json()
+          console.log(data);
+        // Transform API data to match the expected format
+        const formattedData = data.users.map((user: User) => ({
+          id: user._id,
+          name: user.userName,
+          email: user.email,
+          role: user.role === "مدير" ? "admin" : user.role === "محرر" ? "editor" : "viewer",
+          avatar: "/placeholder.svg",
+          initials: user.userName.substring(0, 2),
+          phoneNumber: user.phoneNumber,
+          isActive: user.isActive
+        }))
+        
+        setTableData(formattedData)
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching users:", err)
+        setError("Failed to load users. Please try again later.")
+        // Use sample data as fallback
+        setTableData([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
 
   const handleDelete = (id: string) => {
+    // In a real app, you would call an API to delete the user
     setTableData(tableData.filter((item) => item.id !== id))
     toast({
       title: "تم حذف المستخدم",
@@ -71,7 +91,7 @@ export function UsersTable() {
     })
   }
 
-  const columns: ColumnDef<(typeof data)[0]>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       accessorKey: "avatar",
       header: "المستخدم",
@@ -92,6 +112,13 @@ export function UsersTable() {
       },
     },
     {
+      accessorKey: "phoneNumber",
+      header: "رقم الهاتف",
+      cell: ({ row }) => {
+        return <div>{row.original.phoneNumber}</div>
+      },
+    },
+    {
       accessorKey: "role",
       header: "الدور",
       cell: ({ row }) => {
@@ -104,10 +131,21 @@ export function UsersTable() {
       },
     },
     {
+      accessorKey: "isActive",
+      header: "الحالة",
+      cell: ({ row }) => {
+        const isActive = row.original.isActive
+        return (
+          <Badge variant={isActive ? "default" : "outline"} className={isActive ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}>
+            {isActive ? "نشط" : "غير نشط"}
+          </Badge>
+        )
+      },
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         const user = row.original
-
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -142,6 +180,23 @@ export function UsersTable() {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
+        <p className="mr-2">جاري التحميل...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-500 bg-red-50 rounded-md">
+        {error}
+      </div>
+    )
+  }
 
   return (
     <div>

@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { API_URL } from "@/lib/constants";
+
 import * as z from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 
+// Define your API URL - adjust as needed for your environment
+
 const formSchema = z.object({
   name: z.string().min(3, {
     message: "يجب أن يكون الاسم 3 أحرف على الأقل.",
@@ -20,7 +24,10 @@ const formSchema = z.object({
   email: z.string().email({
     message: "يرجى إدخال عنوان بريد إلكتروني صالح.",
   }),
-  role: z.enum(["admin", "editor", "viewer"], {
+  phoneNumber: z.string().min(10, {
+    message: "يرجى إدخال رقم هاتف صالح.",
+  }),
+  role: z.enum(['مدير', 'محرر', 'مستخدم'], {
     required_error: "يرجى اختيار دور.",
   }),
   status: z.enum(["active", "inactive"], {
@@ -40,6 +47,7 @@ interface UserFormProps {
     id?: string
     name: string
     email: string
+    phoneNumber: string
     role: string
     status: string
   }
@@ -49,6 +57,8 @@ export function UserForm({ initialData }: UserFormProps = {}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const { t } = useLanguage()
+  
+  console.log("UserForm component rendered", { initialData });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,38 +66,101 @@ export function UserForm({ initialData }: UserFormProps = {}) {
       ? {
           name: initialData.name,
           email: initialData.email,
-          role: initialData.role as "admin" | "editor" | "viewer",
+          phoneNumber: initialData.phoneNumber,
+          role: initialData.role as "مدير" | "محرر" | "مستخدم",
           status: initialData.status as "active" | "inactive",
           password: "",
         }
       : {
           name: "",
           email: "",
-          role: "viewer",
+          phoneNumber: "",
+          role: "محرر",
           status: "active",
           password: "",
         },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true)
+  const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log("Form submitted with values:", values);
+    setIsLoading(true);
 
-    // In a real application, you would send the data to an API
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      if (initialData?.id) {
+        console.log("Updating existing user:", initialData.id);
+        // Update existing user logic would go here
+        toast({
+          title: "تم تحديث المستخدم",
+          description: "تم تحديث المستخدم بنجاح.",
+        });
+      } else {
+        console.log("Creating new user, preparing API call");
+        // Create new user
+        const apiUrl = `${API_URL}/auth/addUser`;
+        console.log("API endpoint:", apiUrl);
+        
+        const userData = {
+          userName: values.name,
+          email: values.email,
+          password: values.password,
+          phoneNumber: values.phoneNumber,
+          role: values.role
+        };
+        console.log("Sending user data:", userData);
+        
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+          });
+          
+          console.log("API response status:", response.status);
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            console.error("API error response:", errorData);
+            throw new Error(`Failed to create user: ${response.statusText}`);
+          }
+          
+          const responseData = await response.json().catch(() => ({}));
+          console.log("API success response:", responseData);
 
+          toast({
+            title: "تم إنشاء المستخدم",
+            description: "تم إنشاء المستخدم بنجاح.",
+          });
+        } catch (fetchError) {
+          console.error("Fetch error:", fetchError);
+          throw fetchError;
+        }
+      }
+
+      console.log("Operation successful, redirecting to users dashboard");
+      router.push("/dashboard/users");
+    } catch (error) {
+      console.error("Error during form submission:", error);
       toast({
-        title: initialData ? "تم تحديث المستخدم" : "تم إنشاء المستخدم",
-        description: initialData ? "تم تحديث المستخدم بنجاح." : "تم إنشاء المستخدم بنجاح.",
-      })
+        title: "خطأ",
+        description: "حدث خطأ أثناء حفظ المستخدم.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      console.log("Form submission process completed");
+    }
+  };
 
-      router.push("/dashboard/users")
-    }, 1000)
-  }
+  const handleSubmitButtonClick = () => {
+    console.log("Submit button clicked manually");
+    form.handleSubmit(handleFormSubmit)();
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -119,6 +192,20 @@ export function UserForm({ initialData }: UserFormProps = {}) {
 
           <FormField
             control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("رقم الهاتف") || "phoneNumber"}</FormLabel>
+                <FormControl>
+                  <Input placeholder="أدخل رقم الهاتف" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="role"
             render={({ field }) => (
               <FormItem>
@@ -130,9 +217,9 @@ export function UserForm({ initialData }: UserFormProps = {}) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="admin">{t("admin")}</SelectItem>
-                    <SelectItem value="editor">{t("editor")}</SelectItem>
-                    <SelectItem value="viewer">{t("viewer")}</SelectItem>
+                    <SelectItem value="مدير">{t("admin")}</SelectItem>
+                    <SelectItem value="محرر">{t("editor")}</SelectItem>
+                    <SelectItem value="مستخدم">{t("viewer")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -180,10 +267,23 @@ export function UserForm({ initialData }: UserFormProps = {}) {
         </div>
 
         <div className="flex gap-4">
-          <Button type="submit" className="bg-[#BB2121] hover:bg-[#C20000]" disabled={isLoading}>
+          <Button 
+            type="button" 
+            className="bg-[#BB2121] hover:bg-[#C20000]" 
+            disabled={isLoading}
+            onClick={handleSubmitButtonClick}
+          >
             {isLoading ? t("saving") : initialData ? t("update.user") : t("create.user.button")}
           </Button>
-          <Button type="button" variant="outline" onClick={() => router.push("/dashboard/users")}>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => {
+              console.log("Cancel button clicked");
+              router.push("/dashboard/users");
+            }}
+          >
             {t("cancel")}
           </Button>
         </div>
