@@ -1,149 +1,251 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import Image from "next/image"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { ImageIcon } from "lucide-react"
-
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 
-const formSchema = z.object({
-  name: z.string().min(3, {
-    message: "يجب أن يكون الاسم 3 أحرف على الأقل.",
-  }),
-  email: z.string().email({
-    message: "يرجى إدخال عنوان بريد إلكتروني صالح.",
-  }),
-  image: z.string().optional(),
-})
+// Define the user data type
+interface User {
+  _id: string
+  userName: string
+  email: string
+  role: string
+  isActive: boolean
+  image?: {
+    public_id: string
+    secure_url: string
+  }
+  createdAt: string
+}
 
-export function ProfileForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [imagePreview, setImagePreview] = useState<string | null>("/placeholder.svg")
+export function UserTable() {
+  const [tableData, setTableData] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { t } = useLanguage()
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "أحمد محمد",
-      email: "admin@example.com",
-      image: "/placeholder.svg",
-    },
-  })
+  // Fetch users data
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch("http://localhost:6060/user/getAllUsers")
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch users")
+        }
+        
+        const data = await response.json()
+        setTableData(data.users || [])
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching users:", err)
+        setError("Failed to load users. Please try again later.")
+        setTableData([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true)
+    fetchUsers()
+  }, [])
 
-    // In a real application, you would send the data to an API
-    setTimeout(() => {
-      setIsLoading(false)
-
+  const handleDelete = async (id: string) => {
+    try {
+      // In a real app, you would call an API to delete the user
+      // const response = await fetch(`http://localhost:6060/user/delete/${id}`, {
+      //   method: 'DELETE',
+      // });
+      
+      // if (!response.ok) {
+      //   throw new Error('Failed to delete user');
+      // }
+      
+      // Update the UI after successful deletion
+      setTableData(tableData.filter((item) => item._id !== id))
+      
       toast({
-        title: "تم تحديث الملف الشخصي",
-        description: "تم تحديث معلومات الملف الشخصي بنجاح.",
+        title: "تم حذف المستخدم",
+        description: "تم حذف المستخدم بنجاح.",
       })
-    }, 1000)
-  }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // In a real application, you would upload the file to a storage service
-      // For this demo, we'll just create a local URL
-      const url = URL.createObjectURL(file)
-      setImagePreview(url)
-      form.setValue("image", url)
+    } catch (err) {
+      console.error("Error deleting user:", err)
+      toast({
+        title: "خطأ",
+        description: "فشل حذف المستخدم. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      })
     }
   }
 
+  // Define columns
+  const columns: ColumnDef<User>[] = [
+    {
+      accessorKey: "image",
+      header: "الصورة",
+      cell: ({ row }) => {
+        const user = row.original
+        const imageUrl = user.image?.secure_url || "/placeholder-avatar.png"
+        
+        return (
+          <div className="w-10 h-10 relative overflow-hidden rounded-full">
+            <img
+              src={imageUrl}
+              alt={user.userName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "userName",
+      header: "اسم المستخدم",
+    },
+    {
+      accessorKey: "email",
+      header: "البريد الإلكتروني",
+    },
+    {
+      accessorKey: "role",
+      header: "الدور",
+    },
+    {
+      accessorKey: "isActive",
+      header: "الحالة",
+      cell: ({ row }) => {
+        const isActive = row.original.isActive
+        return (
+          <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
+            isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}>
+            {isActive ? "نشط" : "غير نشط"}
+          </div>
+        )
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const user = row.original
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">فتح القائمة</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/users/${user._id}/edit`}>
+                  <Edit className="ml-2 h-4 w-4" />
+                  تعديل
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDelete(user._id)}>
+                <Trash className="ml-2 h-4 w-4" />
+                حذف
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+
+  const table = useReactTable({
+    data: tableData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
+        <p className="mr-2">جاري التحميل...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-500 bg-red-50 rounded-md">
+        {error}
+      </div>
+    )
+  }
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("name")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="أدخل اسمك" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("email")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div>
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("image")}</FormLabel>
-                  <FormControl>
-                    <div className="mt-2 flex flex-col gap-4">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => document.getElementById("profile-image-upload")?.click()}
-                        >
-                          <ImageIcon className="mr-2 h-4 w-4" />
-                          {imagePreview ? t("change.image") : t("upload.image")}
-                        </Button>
-                        <Input
-                          id="profile-image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageChange}
-                        />
-                      </div>
-
-                      {imagePreview && (
-                        <div className="relative h-40 w-40 overflow-hidden rounded-full border mx-auto">
-                          <Image src={imagePreview || "/placeholder.svg"} alt="Preview" fill className="object-cover" />
-                        </div>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        <Button type="submit" className="bg-[#BB2121] hover:bg-[#C20000]" disabled={isLoading}>
-          {isLoading ? t("saving") : t("update.profile")}
+    <div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  لم يتم العثور على مستخدمين.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+          السابق
         </Button>
-      </form>
-    </Form>
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          التالي
+        </Button>
+      </div>
+    </div>
   )
 }

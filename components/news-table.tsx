@@ -1,10 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
-import { format } from "date-fns"
-import { ar } from "date-fns/locale"
 import {
   type ColumnDef,
   flexRender,
@@ -22,99 +19,162 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Edit, MoreHorizontal, Trash } from "lucide-react"
+import { Edit, MoreHorizontal, Trash, Eye } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { useLanguage } from "@/components/language-provider"
+import { API_URL } from "@/lib/constants"
 
-// بيانات نموذجية - في تطبيق حقيقي، ستأتي هذه من API
-const data = [
-  {
-    id: "1",
-    title: "الفريق يفوز بالبطولة",
-    content: "فاز فريقنا بالبطولة للعام الثالث على التوالي.",
-    image: "/placeholder.svg?height=80&width=120",
-    publishedAt: new Date("2023-05-15"),
-  },
-  {
-    id: "2",
-    title: "التعاقد مع لاعب جديد",
-    content: "تعاقدنا مع لاعب نجم جديد لتعزيز فريقنا.",
-    image: "/placeholder.svg?height=80&width=120",
-    publishedAt: new Date("2023-06-02"),
-  },
-  {
-    id: "3",
-    title: "اكتمال تجديد الملعب",
-    content: "اكتمل الآن تجديد الملعب مع مرافق جديدة.",
-    image: "/placeholder.svg?height=80&width=120",
-    publishedAt: new Date("2023-06-10"),
-  },
-  {
-    id: "4",
-    title: "مقابلة مع المدرب",
-    content: "مقابلة حصرية مع مدربنا حول الموسم القادم.",
-    image: "/placeholder.svg?height=80&width=120",
-    publishedAt: new Date("2023-06-15"),
-  },
-  {
-    id: "5",
-    title: "تذاكر الموسم متاحة الآن",
-    content: "تذاكر الموسم للموسم القادم متاحة الآن للشراء.",
-    image: "/placeholder.svg?height=80&width=120",
-    publishedAt: new Date("2023-06-20"),
-  },
-]
+// Define the type for news items from your API
+interface NewsItem {
+  _id: string
+  customId: string
+  title: {
+    ar: string
+    en: string
+  }
+  content: {
+    ar: string
+    en: string
+  }
+  image: {
+    secure_url: string
+    public_id: string
+  }
+  date: string
+}
 
 export function NewsTable() {
-  const [tableData, setTableData] = useState(data)
+  // Client-side only state
+  const [tableData, setTableData] = useState<NewsItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleDelete = (id: string) => {
-    setTableData(tableData.filter((item) => item.id !== id))
-    toast({
-      title: "تم حذف المقال الإخباري",
-      description: "تم حذف المقال الإخباري بنجاح.",
-    })
+  // Fetch data on the client side only
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`${API_URL}/news/getallnews`)
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch news")
+        }
+        
+        const data = await response.json()
+        setTableData(data.news || [])
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching news:", err)
+        setError("Failed to load news. Please try again later.")
+        setTableData([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchNews()
+  }, [])
+
+  const handleDelete = async (id: string) => {
+    try {
+      // In a real app, you would call an API to delete the news
+      // const response = await fetch(`http://localhost:6060/news/delete/${id}`, {
+      //   method: 'DELETE',
+      // });
+      
+      // if (!response.ok) {
+      //   throw new Error('Failed to delete news');
+      // }
+      
+      // Update the UI after successful deletion
+      setTableData(tableData.filter((item) => item._id !== id))
+      
+      toast({
+        title: "تم حذف المقال الإخباري",
+        description: "تم حذف المقال الإخباري بنجاح.",
+      })
+    } catch (err) {
+      console.error("Error deleting news:", err)
+      toast({
+        title: "خطأ",
+        description: "فشل حذف المقال الإخباري. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const columns: ColumnDef<(typeof data)[0]>[] = [
+  // Format date safely without locale-specific formatting
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+    } catch (e) {
+      return dateString
+    }
+  }
+
+  // Define columns only on the client side
+  const columns: ColumnDef<NewsItem>[] = [
     {
       accessorKey: "image",
       header: "الصورة",
-      cell: ({ row }) => (
-        <div className="w-[80px] h-[50px] relative">
-          <Image
-            src={row.getValue("image") || "/placeholder.svg"}
-            alt={row.getValue("title")}
-            fill
-            className="object-cover rounded-md"
-          />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const news = row.original
+        // Add null check for image
+        if (!news.image || !news.image.secure_url) {
+          return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md"></div>
+        }
+        
+        return (
+          <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
+            <img
+              src={news.image.secure_url}
+              alt={news.title?.ar|| "News image"}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )
+      },
     },
     {
       accessorKey: "title",
       header: "العنوان",
+      cell: ({ row }) => {
+        const news = row.original
+        // Add null check for title
+        const title = news.title?.ar|| ""
+        return <div className="font-medium">{title}</div>
+      },
     },
     {
       accessorKey: "content",
       header: "المحتوى",
       cell: ({ row }) => {
-        const content = row.getValue("content") as string
-        return <div className="truncate max-w-[300px]">{content}</div>
+        const news = row.original
+        // Add null check for content
+        const content = news.content?.ar|| ""
+        
+        // Now content is guaranteed to be a string
+        const truncatedContent = content.length > 50 
+          ? content.substring(0, 50) + "..." 
+          : content
+        
+        return <div className="truncate max-w-[300px]">{truncatedContent}</div>
       },
     },
     {
-      accessorKey: "publishedAt",
+      accessorKey: "date",
       header: "تاريخ النشر",
       cell: ({ row }) => {
-        const date = row.getValue("publishedAt") as Date
-        return <div>{format(date, "PPP", { locale: ar })}</div>
+        const news = row.original
+        // Add null check for date
+        return <div>{news.date ? formatDate(news.date) : ""}</div>
       },
     },
     {
       id: "actions",
       cell: ({ row }) => {
         const news = row.original
-
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -127,12 +187,18 @@ export function NewsTable() {
               <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href={`/dashboard/news/${news.id}/edit`}>
+                <Link href={`/dashboard/news/${news._id}`}>
+                  <Eye className="ml-2 h-4 w-4" />
+                  عرض
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/news/${news._id}/edit`}>
                   <Edit className="ml-2 h-4 w-4" />
                   تعديل
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(news.id)}>
+              <DropdownMenuItem onClick={() => handleDelete(news._id)}>
                 <Trash className="ml-2 h-4 w-4" />
                 حذف
               </DropdownMenuItem>
@@ -148,7 +214,29 @@ export function NewsTable() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
   })
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
+        <p className="mr-2">جاري التحميل...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-500 bg-red-50 rounded-md">
+        {error}
+      </div>
+    )
+  }
 
   return (
     <div>
