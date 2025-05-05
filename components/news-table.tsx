@@ -78,13 +78,16 @@ export function NewsTable() {
   const handleDelete = async (id: string) => {
     try {
       // In a real app, you would call an API to delete the news
-      // const response = await fetch(`http://localhost:6060/news/delete/${id}`, {
-      //   method: 'DELETE',
-      // });
-      
-      // if (!response.ok) {
-      //   throw new Error('Failed to delete news');
-      // }
+      const response = await fetch(`http://localhost:6060/news/${id}`, {
+        method: 'DELETE',
+      });
+      const Data = await response.json();
+      console.log(Data);
+      console.log(response);
+      if (!response.ok) {
+
+        throw new Error('Failed to delete news');
+      }
       
       // Update the UI after successful deletion
       setTableData(tableData.filter((item) => item._id !== id))

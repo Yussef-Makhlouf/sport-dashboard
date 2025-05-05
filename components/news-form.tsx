@@ -329,7 +329,7 @@
 
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -362,6 +362,7 @@ const formSchema = z.object({
 })
 
 interface NewsFormProps {
+  newsId?: string;
   initialData?: {
     _id?: string
     title?: {
@@ -379,23 +380,71 @@ interface NewsFormProps {
   }
 }
 
-export function NewsForm({ initialData }: NewsFormProps = {}) {
+export function NewsForm({ newsId, initialData }: NewsFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.image?.secure_url || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t } = useLanguage()
 
+  // State to store the news data from API
+  const [newsData, setNewsData] = useState(initialData)
+
+  // Fetch news data if a newsId is provided but no initialData
+  useEffect(() => {
+    const fetchNewsData = async () => {
+      if (newsId && !initialData) {
+        try {
+          setIsFetching(true)
+          const response = await fetch(`${API_URL}/news/getnews/${newsId}`)
+          
+          if (!response.ok) {
+            throw new Error("Failed to fetch news data")
+          }
+          
+          const data = await response.json()
+          setNewsData(data.news)
+          
+          // Set preview URL if image exists
+          if (data.news?.image?.secure_url) {
+            setPreviewUrl(data.news.image.secure_url)
+          }
+          
+          // Reset form with fetched data
+          form.reset({
+            title_ar: data.news?.title?.ar || "",
+            title_en: data.news?.title?.en || "",
+            content_ar: data.news?.content?.ar || "",
+            content_en: data.news?.content?.en || "",
+            category: data.news?.category || "",
+          })
+        } catch (error) {
+          console.error("Error fetching news:", error)
+          toast({
+            title: "خطأ",
+            description: "فشل في تحميل بيانات الخبر. يرجى المحاولة مرة أخرى.",
+            variant: "destructive",
+          })
+        } finally {
+          setIsFetching(false)
+        }
+      }
+    }
+
+    fetchNewsData()
+  }, [newsId, initialData])
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData
+    defaultValues: initialData || newsData
       ? {
-          title_ar: initialData.title?.ar || "",
-          title_en: initialData.title?.en || "",
-          content_ar: initialData.content?.ar || "",
-          content_en: initialData.content?.en || "",
-          category: initialData.category || "",
+          title_ar: (initialData || newsData)?.title?.ar || "",
+          title_en: (initialData || newsData)?.title?.en || "",
+          content_ar: (initialData || newsData)?.content?.ar || "",
+          content_en: (initialData || newsData)?.content?.en || "",
+          category: (initialData || newsData)?.category || "",
         }
       : {
           title_ar: "",
@@ -405,6 +454,19 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
           category: "",
         },
   })
+
+  // Update form when newsData changes
+  useEffect(() => {
+    if (newsData) {
+      form.reset({
+        title_ar: newsData.title?.ar || "",
+        title_en: newsData.title?.en || "",
+        content_ar: newsData.content?.ar || "",
+        content_en: newsData.content?.en || "",
+        category: newsData.category || "",
+      })
+    }
+  }, [newsData])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -427,7 +489,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       setIsLoading(true)
 
       // Check if we're creating a new news item and require an image
-      if (!initialData && !selectedImage) {
+      if (!newsId && !initialData?._id && !selectedImage) {
         toast({
           title: "خطأ",
           description: "يرجى اختيار صورة للخبر",
@@ -449,14 +511,16 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       if (selectedImage) {
         formData.append("image", selectedImage)
       }
-      console.log(formData);
+      
+      // Determine which ID to use
+      const id = newsId || initialData?._id || newsData?._id
       
       // Determine URL and method based on whether we're editing or creating
-      const url = initialData?._id 
-        ? `${API_URL}/news/update/${initialData._id}` 
+      const url = id 
+        ? `${API_URL}/news/updatenews/${id}` 
         : `${API_URL}/news/addNews`
       
-      const method = initialData?._id ? "PUT" : "POST"
+      const method = id ? "PUT" : "POST"
 
       // Send request to API
       const response = await fetch(url, {
@@ -465,19 +529,17 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         // Don't set Content-Type header when sending FormData
         // The browser will set it automatically with the correct boundary
       })
-      const Data = await response.json()
-      console.log(Data);
       
       if (!response.ok) {
-        const errorData = await response.json()
-        console.log(errorData);
-        
-        throw new Error(errorData.message || "Failed to save news")
+        throw new Error("Failed to save news")
       }
 
+      const responseData = await response.json()
+      console.log(responseData)
+
       toast({
-        title: initialData ? "تم تحديث الخبر" : "تم إنشاء الخبر",
-        description: initialData ? "تم تحديث الخبر بنجاح." : "تم إنشاء الخبر بنجاح.",
+        title: id ? "تم تحديث الخبر" : "تم إنشاء الخبر",
+        description: id ? "تم تحديث الخبر بنجاح." : "تم إنشاء الخبر بنجاح.",
       })
 
       // Redirect to news list
@@ -493,6 +555,52 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  async function onDelete() {
+    const id = newsId || initialData?._id || newsData?._id
+    if (!id) return
+
+    try {
+      setIsLoading(true)
+  
+      const response = await fetch(`${API_URL}/news/${id}`, {
+        method: "DELETE",
+      })
+  
+      if (!response.ok) {
+        throw new Error("فشل في حذف الخبر")
+      }
+  
+      const result = await response.json()
+      console.log(result)
+  
+      toast({
+        title: "تم حذف الخبر",
+        description: "تم حذف الخبر بنجاح.",
+      })
+  
+      router.push("/dashboard/news")
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting news:", error)
+      toast({
+        title: "خطأ",
+        description: error instanceof Error ? error.message : "حدث خطأ أثناء حذف الخبر",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isFetching) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
+        <p className="mr-2">جاري تحميل البيانات...</p>
+      </div>
+    )
   }
 
   return (
@@ -622,8 +730,8 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                 </div>
               )}
               
-              {!initialData && !previewUrl && (
-                <p className="text-sm text-red-500">* الصورة مطلوبة</p>
+              {!newsId && !initialData?._id && !newsData?._id && !previewUrl && (
+                <p className="text-sm text-red-500">* الصورة مطلوبة للأخبار الجديدة</p>
               )}
             </div>
           </div>
@@ -635,8 +743,18 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             className="bg-[#BB2121] hover:bg-[#C20000]" 
             disabled={isLoading}
           >
-            {isLoading ? "جاري الحفظ..." : initialData ? "تحديث الخبر" : "إنشاء خبر جديد"}
+            {isLoading ? "جاري الحفظ..." : (newsId || initialData?._id || newsData?._id) ? "تحديث الخبر" : "إنشاء خبر جديد"}
           </Button>
+          {(newsId || initialData?._id || newsData?._id) && (
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={onDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? "جاري الحذف..." : "حذف الخبر"}
+            </Button>
+          )}
           <Button 
             type="button" 
             variant="outline" 
