@@ -22,6 +22,7 @@ import {
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
+import { API_URL } from "@/lib/constants";
 
 // Define the user data type
 interface User {
@@ -37,7 +38,7 @@ interface User {
   createdAt: string
 }
 
-export function UserTable() {
+export function ProfileForm() {
   const [tableData, setTableData] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,8 +49,8 @@ export function UserTable() {
     const fetchUsers = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch("http://localhost:6060/user/getAllUsers")
-        
+        const response = await fetch(`${API_URL}/auth/getAll`)
+        console.log(response);
         if (!response.ok) {
           throw new Error("Failed to fetch users")
         }
@@ -72,7 +73,7 @@ export function UserTable() {
   const handleDelete = async (id: string) => {
     try {
       // In a real app, you would call an API to delete the user
-      // const response = await fetch(`http://localhost:6060/user/delete/${id}`, {
+      // const response = await fetch(`${API_URL}/auth/delete/${id}`, {
       //   method: 'DELETE',
       // });
       
