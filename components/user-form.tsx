@@ -88,7 +88,30 @@ export function UserForm({ initialData }: UserFormProps = {}) {
     try {
       if (initialData?.id) {
         console.log("Updating existing user:", initialData.id);
-        // Update existing user logic would go here
+        const apiUrl = `${API_URL}/auth/update/${initialData.id}`;
+        
+        const userData = {
+          userName: values.name,
+          email: values.email,
+          phoneNumber: values.phoneNumber,
+          role: values.role,
+          isActive: values.status === "active"
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          console.error("API error response:", errorData);
+          throw new Error(`Failed to update user: ${response.statusText}`);
+        }
+
         toast({
           title: "تم تحديث المستخدم",
           description: "تم تحديث المستخدم بنجاح.",

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BarChart3, FileText, Calendar, Users, User } from "lucide-react"
+import { BarChart3, FileText, Calendar, Users, User, Settings } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 
 export function DashboardNav() {
@@ -25,6 +25,11 @@ export function DashboardNav() {
       title: t("events.management"),
       href: "/dashboard/events",
       icon: Calendar,
+    },
+    {
+      title: t("members.management"),
+      href: "/dashboard/members",
+      icon: Settings,
     },
     {
       title: t("user.management"),

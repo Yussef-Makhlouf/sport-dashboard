@@ -326,14 +326,14 @@
 // }
 
 
-
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import { X } from "lucide-react" // Import X icon for delete button
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -361,6 +361,11 @@ const formSchema = z.object({
   category: z.string().optional(),
 })
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 interface NewsFormProps {
   initialData?: {
     _id?: string
@@ -376,16 +381,72 @@ interface NewsFormProps {
     image?: {
       secure_url: string
     }
+    images?: Array<{
+      secure_url: string
+    }>
   }
 }
 
 export function NewsForm({ initialData }: NewsFormProps = {}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.image?.secure_url || null)
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t } = useLanguage()
+
+  // Initialize preview URLs from initialData if available
+  useEffect(() => {
+    if (initialData) {
+      const initialImages: string[] = []
+      
+      // Add main image if exists
+      if (initialData.image?.secure_url) {
+        initialImages.push(initialData.image.secure_url)
+      }
+      
+      // Add additional images if they exist
+      if (initialData.images && initialData.images.length > 0) {
+        initialData.images.forEach(img => {
+          if (img.secure_url) initialImages.push(img.secure_url)
+        })
+      }
+      
+      setPreviewUrls(initialImages)
+    }
+  }, [initialData])
+
+  // Fetch categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true)
+        const response = await fetch(`${API_URL}/category/getAll`)
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories')
+        }
+        
+        const data = await response.json()
+        if (data.category && Array.isArray(data.category)) {
+          setCategories(data.category)
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+        toast({
+          title: "خطأ",
+          description: "فشل في تحميل الفئات",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -407,14 +468,48 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   })
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedImage(file)
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    
+    // Check if adding these files would exceed the limit of 4 images
+    if (selectedImages.length + files.length + previewUrls.length > 4) {
+      toast({
+        title: "تنبيه",
+        description: "يمكنك إضافة 4 صور كحد أقصى",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Add new files to selectedImages array
+    const newFiles = Array.from(files)
+    setSelectedImages(prev => [...prev, ...newFiles])
+    
+    // Create preview URLs for new files
+    newFiles.forEach(file => {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
+        setPreviewUrls(prev => [...prev, reader.result as string])
       }
       reader.readAsDataURL(file)
+    })
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const removeImage = (index: number) => {
+    // If the image is from initialData (existing image)
+    if (index < previewUrls.length - selectedImages.length) {
+      setPreviewUrls(prev => prev.filter((_, i) => i !== index))
+    } 
+    // If the image is newly added
+    else {
+      const newSelectedImagesIndex = index - (previewUrls.length - selectedImages.length)
+      setSelectedImages(prev => prev.filter((_, i) => i !== newSelectedImagesIndex))
+      setPreviewUrls(prev => prev.filter((_, i) => i !== index))
     }
   }
 
@@ -426,11 +521,11 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     try {
       setIsLoading(true)
 
-      // Check if we're creating a new news item and require an image
-      if (!initialData && !selectedImage) {
+      // Check if we're creating a new news item and require at least one image
+      if (!initialData && previewUrls.length === 0) {
         toast({
           title: "خطأ",
-          description: "يرجى اختيار صورة للخبر",
+          description: "يرجى اختيار صورة واحدة على الأقل للخبر",
           variant: "destructive",
         })
         setIsLoading(false)
@@ -445,11 +540,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         if (value) formData.append(key, value)
       })
       
-      // Add image if selected
-      if (selectedImage) {
-        formData.append("image", selectedImage)
-      }
-      console.log(formData);
+      // Add all selected images to FormData
+      selectedImages.forEach((file, index) => {
+        formData.append(`images`, file)
+      })
       
       // Determine URL and method based on whether we're editing or creating
       const url = initialData?._id 
@@ -462,16 +556,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       const response = await fetch(url, {
         method,
         body: formData,
-        // Don't set Content-Type header when sending FormData
-        // The browser will set it automatically with the correct boundary
       })
-      const Data = await response.json()
-      console.log(Data);
       
       if (!response.ok) {
         const errorData = await response.json()
-        console.log(errorData);
-        
         throw new Error(errorData.message || "Failed to save news")
       }
 
@@ -581,10 +669,17 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="رياضة">رياضة</SelectItem>
-                    <SelectItem value="فعاليات">فعاليات</SelectItem>
-                    <SelectItem value="إعلانات">إعلانات</SelectItem>
-                    <SelectItem value="أخرى">أخرى</SelectItem>
+                    {isLoadingCategories ? (
+                      <SelectItem value="loading" disabled>جاري تحميل الفئات...</SelectItem>
+                    ) : categories.length > 0 ? (
+                      categories.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-categories" disabled>لا توجد فئات متاحة</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -592,38 +687,60 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
-          {/* Image Upload */}
+          {/* Multiple Image Upload */}
           <div className="col-span-1 md:col-span-2">
-            <FormLabel>صورة الخبر</FormLabel>
-            <div className="mt-2 flex flex-col space-y-2">
+            <FormLabel>صور الخبر (الحد الأقصى 4 صور)</FormLabel>
+            <div className="mt-2 flex flex-col space-y-4">
               <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleImageChange}
                 accept="image/*"
+                multiple
                 className="hidden"
               />
+              
+              {/* Upload button - disabled if already have 4 images */}
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={triggerFileInput}
-                className="w-full h-32 border-dashed"
+                className="w-full h-16 border-dashed"
+                disabled={previewUrls.length >= 4}
               >
-                {previewUrl ? "تغيير الصورة" : "اختر صورة"}
+                {previewUrls.length > 0 
+                  ? `إضافة صورة (${previewUrls.length}/4)` 
+                  : "اختر صورة"}
               </Button>
               
-              {previewUrl && (
-                <div className="relative w-full h-48 mt-2 rounded-md overflow-hidden">
-                  <img 
-                    src={previewUrl} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
-                  />
+              {/* Image previews */}
+              {previewUrls.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {previewUrls.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <div className="relative w-full h-48 rounded-md overflow-hidden border">
+                        <img 
+                          src={url} 
+                          alt={`Preview ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full opacity-80 hover:opacity-100"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
               
-              {!initialData && !previewUrl && (
-                <p className="text-sm text-red-500">* الصورة مطلوبة</p>
+              {!initialData && previewUrls.length === 0 && (
+                <p className="text-sm text-red-500">* يجب إضافة صورة واحدة على الأقل</p>
               )}
             </div>
           </div>
