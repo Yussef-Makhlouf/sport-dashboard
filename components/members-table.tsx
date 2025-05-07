@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   type ColumnDef,
@@ -19,99 +19,117 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Edit, MoreHorizontal, Trash } from "lucide-react"
+import { Edit, MoreHorizontal, Trash, Eye } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 
-// Define the user data type
-interface User {
+// Define the type for member items from your API
+interface MemberItem {
   _id: string
-  userName: string
-  email: string
-  role: string
-  isActive: boolean
-  image?: {
-    public_id: string
-    secure_url: string
+  name: {
+    ar: string
+    en: string
   }
-  createdAt: string
+  position: {
+    ar: string
+    en: string
+  }
+  description: {
+    ar: string
+    en: string
+  }
+  image: {
+    secure_url: string
+    public_id: string
+  }
+  createdAt?: string
 }
 
-export function UserTable() {
-  const [tableData, setTableData] = useState<User[]>([])
+export function MembersTable() {
+  // Client-side only state
+  const [tableData, setTableData] = useState<MemberItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
 
-  // Fetch users data
+  // Fetch data on the client side only
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchMembers = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`${API_URL}/auth/getUser`)
+        const response = await fetch(`${API_URL}/members/getallmembers`)
         
         if (!response.ok) {
-          throw new Error("Failed to fetch users")
+          throw new Error("Failed to fetch members")
         }
         
         const data = await response.json()
-        setTableData(data.users || [])
+        console.log(data);
+        
+        // Handle the new response structure with members array
+        setTableData(data.members || [])
         setError(null)
       } catch (err) {
-        console.error("Error fetching users:", err)
-        setError("Failed to load users. Please try again later.")
+        console.error("Error fetching members:", err)
+        setError("Failed to load members. Please try again later.")
         setTableData([])
       } finally {
         setIsLoading(false)
       }
     }
-
-    fetchUsers()
+    fetchMembers()
   }, [])
 
   const handleDelete = async (id: string) => {
+    if (!confirm(t("Are you sure you want to delete this member?"))) {
+      return
+    }
+    
     try {
-      // In a real app, you would call an API to delete the user
-      // const response = await fetch(`http://localhost:6060/user/delete/${id}`, {
-      //   method: 'DELETE',
-      // });
+      const response = await fetch(`${API_URL}/members/${id}`, {
+        method: 'DELETE',
+      });
       
-      // if (!response.ok) {
-      //   throw new Error('Failed to delete user');
-      // }
+      if (!response.ok) {
+        throw new Error('Failed to delete member');
+      }
       
       // Update the UI after successful deletion
       setTableData(tableData.filter((item) => item._id !== id))
       
       toast({
-        title: "تم حذف المستخدم",
-        description: "تم حذف المستخدم بنجاح.",
+        title: t("member.deleted"),
+        description: t("member.deleted.description"),
       })
     } catch (err) {
-      console.error("Error deleting user:", err)
+      console.error("Error deleting member:", err)
       toast({
-        title: "خطأ",
-        description: "فشل حذف المستخدم. يرجى المحاولة مرة أخرى.",
+        title: t("Error"),
+        description: t("Failed to delete member. Please try again."),
         variant: "destructive",
       })
     }
   }
 
-  // Define columns
-  const columns: ColumnDef<User>[] = [
+  // Define columns only on the client side
+  const columns: ColumnDef<MemberItem>[] = [
     {
       accessorKey: "image",
-      header: "الصورة",
+      header: t("Image"),
       cell: ({ row }) => {
-        const user = row.original
-        const imageUrl = user.image?.secure_url || "/placeholder-avatar.png"
+        const member = row.original
+        
+        // Add null check for image
+        if (!member.image || !member.image.secure_url) {
+          return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md"></div>
+        }
         
         return (
-          <div className="w-10 h-10 relative overflow-hidden rounded-full">
+          <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
             <img
-              src={imageUrl}
-              alt={user.userName}
+              src={member.image.secure_url}
+              alt={member.name?.ar || "Member image"}
               className="w-full h-full object-cover"
             />
           </div>
@@ -119,55 +137,56 @@ export function UserTable() {
       },
     },
     {
-      accessorKey: "userName",
-      header: "اسم المستخدم",
-    },
-    {
-      accessorKey: "email",
-      header: "البريد الإلكتروني",
-    },
-    {
-      accessorKey: "role",
-      header: "الدور",
-    },
-    {
-      accessorKey: "isActive",
-      header: "الحالة",
+      accessorKey: "name",
+      header: t("Name"),
       cell: ({ row }) => {
-        const isActive = row.original.isActive
-        return (
-          <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-            isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-          }`}>
-            {isActive ? "نشط" : "غير نشط"}
-          </div>
-        )
+        const member = row.original
+        // Add null check for name
+        const name = member.name?.ar
+        return <div className="font-medium">{name}</div>
       },
     },
     {
+      accessorKey: "position",
+      header: t("Position"),
+      cell: ({ row }) => {
+        const member = row.original
+        // Add null check for position
+        const position = member.position?.ar
+        return <div>{position}</div>
+      },
+    },
+
+    {
       id: "actions",
       cell: ({ row }) => {
-        const user = row.original
+        const member = row.original
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">فتح القائمة</span>
+                <span className="sr-only">{t("Open menu")}</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href={`/dashboard/users/${user._id}/edit`}>
-                  <Edit className="ml-2 h-4 w-4" />
-                  تعديل
+                <Link href={`/dashboard/members/${member._id}`}>
+                  <Eye className="ml-2 h-4 w-4" />
+                  {t("View")}
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(user._id)}>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/members/edit/${member._id}`}>
+                  <Edit className="ml-2 h-4 w-4" />
+                  {t("Edit")}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDelete(member._id)}>
                 <Trash className="ml-2 h-4 w-4" />
-                حذف
+                {t("Delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -192,7 +211,7 @@ export function UserTable() {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
-        <p className="mr-2">جاري التحميل...</p>
+        <p className="mr-2">{t("Loading...")}</p>
       </div>
     )
   }
@@ -207,6 +226,13 @@ export function UserTable() {
 
   return (
     <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">{t("members.management")}</h2>
+        <Link href="/dashboard/members/create">
+          <Button>{t("add.member")}</Button>
+        </Link>
+      </div>
+      
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -232,7 +258,7 @@ export function UserTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  لم يتم العثور على مستخدمين.
+                  {t("No members found.")}
                 </TableCell>
               </TableRow>
             )}
@@ -241,10 +267,10 @@ export function UserTable() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          السابق
+          {t("Previous")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          التالي
+          {t("Next")}
         </Button>
       </div>
     </div>

@@ -82,13 +82,61 @@ export function UsersTable() {
     fetchUsers()
   }, [])
 
-  const handleDelete = (id: string) => {
-    // In a real app, you would call an API to delete the user
-    setTableData(tableData.filter((item) => item.id !== id))
-    toast({
-      title: "تم حذف المستخدم",
-      description: "تم حذف المستخدم بنجاح.",
-    })
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      // Only update the UI if the API call was successful
+      setTableData(tableData.filter((item) => item.id !== id));
+      toast({
+        title: "تم حذف المستخدم",
+        description: "تم حذف المستخدم بنجاح.",
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء حذف المستخدم. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const getSingleUser = async (id: string) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/getUser/${id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user');
+      }
+
+      const data = await response.json();
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء جلب بيانات المستخدم. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }
+
+  const handleEdit = async (id: string) => {
+    const userData = await getSingleUser(id);
+    if (userData) {
+      // Store user data in localStorage or state management before navigation
+      localStorage.setItem('editUserData', JSON.stringify(userData));
+      window.location.href = `/dashboard/users/${id}/edit`;
+    }
   }
 
   const columns: ColumnDef<any>[] = [
@@ -157,11 +205,9 @@ export function UsersTable() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/users/${user.id}/edit`}>
-                  <Edit className="ml-2 h-4 w-4" />
-                  تعديل
-                </Link>
+              <DropdownMenuItem onClick={() => handleEdit(user.id)}>
+                <Edit className="ml-2 h-4 w-4" />
+                تعديل
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleDelete(user.id)}>
                 <Trash className="ml-2 h-4 w-4" />
