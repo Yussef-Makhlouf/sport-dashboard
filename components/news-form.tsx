@@ -542,12 +542,12 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       
       // Add all selected images to FormData
       selectedImages.forEach((file, index) => {
-        formData.append(`images`, file)
+        formData.append(`image`, file)
       })
       
       // Determine URL and method based on whether we're editing or creating
       const url = initialData?._id 
-        ? `${API_URL}/news/update/${initialData._id}` 
+        ? `${API_URL}/news/${initialData._id}` 
         : `${API_URL}/news/addNews`
       
       const method = initialData?._id ? "PUT" : "POST"
