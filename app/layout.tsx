@@ -25,6 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
+      <head>
+
+        <link rel="icon" href="/favicon.png" sizes="any" />
+
+      </head>
       <body className={cairo.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <LanguageProvider>

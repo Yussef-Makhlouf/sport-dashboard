@@ -29,6 +29,8 @@ const translations = {
     "check.email.description": "لقد أرسلنا لك رابط إعادة تعيين كلمة المرور. يرجى التحقق من بريدك الإلكتروني.",
 
     // Dashboard
+
+    // Dashboard
     dashboard: "لوحة التحكم",
     "news.management": "إدارة الأخبار",
     "events.management": "إدارة الفعاليات",
@@ -37,7 +39,7 @@ const translations = {
     profile: "الملف الشخصي",
     logout: "تسجيل الخروج",
     "switch.language": "تبديل اللغة",
-
+"add.member": "إضافة عضو",
     // Stats
     "total.news": "إجمالي الأخبار",
     "upcoming.events": "الفعاليات القادمة",
@@ -227,7 +229,7 @@ const translations = {
     "back.to.login": "Back to login",
     "check.email": "Check your email",
     "check.email.description": "We've sent you a password reset link. Please check your email.",
-
+    "members.management":"member manaement",
     // Dashboard
     dashboard: "Dashboard",
     "news.management": "News Management",
@@ -253,6 +255,9 @@ const translations = {
     "recent.news.description": "Latest news articles published",
     "upcoming.events.title": "Upcoming Events",
     "upcoming.events.description": "Events scheduled for the next 30 days",
+"add.member":"add member",
+    // Members
+    members:"members",
 
     // News
     "add.news": "Add News",

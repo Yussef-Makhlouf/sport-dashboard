@@ -53,8 +53,7 @@ export function MobileNav() {
       <SheetContent side={language === "ar" ? "left" : "right"} className="w-[80%] bg-[#111111] text-white p-0">
         <div className="flex h-16 items-center border-b border-[#222222] px-4">
           <div className="flex items-center text-lg font-medium">
-            <img src="/logo.png" alt="UAEMMAF" className={cn("h-8 w-8", language === "ar" ? "ml-2" : "mr-2")} />
-            UAEMMAF
+            <img src="/logo3.png" alt="UAEMMAF" className={cn("h-auto w-auto", language === "ar" ? "ml-2" : "mr-2")} />
           </div>
           <Button
             variant="ghost"

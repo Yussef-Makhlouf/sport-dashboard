@@ -47,8 +47,8 @@ export function DashboardNav() {
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center border-b border-[#222222] px-4">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="UAEMMAF" className="h-8 w-8" />
-          <span className="font-semibold">UAEMMAF</span>
+          <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" />
+          
         </div>
       </div>
       <nav className="flex-1 overflow-auto py-6">
