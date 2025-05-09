@@ -36,10 +36,11 @@ interface NewsItem {
     ar: string
     en: string
   }
-  image: {
+  image: Array<{
     secure_url: string
     public_id: string
-  }
+    _id: string
+  }>
   date: string
 }
 
@@ -120,16 +121,16 @@ export function NewsTable() {
       header: "الصورة",
       cell: ({ row }) => {
         const news = row.original
-        // Add null check for image
-        if (!news.image || !news.image.secure_url) {
+        // Add null check for image array
+        if (!news.image || news.image.length === 0 || !news.image[0].secure_url) {
           return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md"></div>
         }
         
         return (
           <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
             <img
-              src={news.image.secure_url}
-              alt={news.title?.ar|| "News image"}
+              src={news.image[0].secure_url}
+              alt={news.title?.ar || "News image"}
               className="w-full h-full object-cover"
             />
           </div>
