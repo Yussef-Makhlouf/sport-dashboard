@@ -172,12 +172,12 @@ export function MembersTable() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              {/* <DropdownMenuItem asChild>
                 <Link href={`/dashboard/members/${member._id}`}>
                   <Eye className="ml-2 h-4 w-4" />
                   {t("View")}
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem asChild>
                 <Link href={`/dashboard/members/edit/${member._id}`}>
                   <Edit className="ml-2 h-4 w-4" />

@@ -78,13 +78,13 @@ export function NewsTable() {
   const handleDelete = async (id: string) => {
     try {
       // In a real app, you would call an API to delete the news
-      // const response = await fetch(`http://localhost:6060/news/delete/${id}`, {
-      //   method: 'DELETE',
-      // });
+      const response = await fetch(`${API_URL}/news/${id}`, {
+        method: 'DELETE',
+      });
       
-      // if (!response.ok) {
-      //   throw new Error('Failed to delete news');
-      // }
+      if (!response.ok) {
+        throw new Error('Failed to delete news');
+      }
       
       // Update the UI after successful deletion
       setTableData(tableData.filter((item) => item._id !== id))
@@ -186,12 +186,12 @@ export function NewsTable() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              {/* <DropdownMenuItem asChild>
                 <Link href={`/dashboard/news/${news._id}`}>
                   <Eye className="ml-2 h-4 w-4" />
                   عرض
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem asChild>
                 <Link href={`/dashboard/news/${news._id}/edit`}>
                   <Edit className="ml-2 h-4 w-4" />
