@@ -14,8 +14,8 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-40 border-b bg-[#111111] text-white">
         <div className="container flex h-16 items-center px-4 sm:px-6">
           <div className="flex items-center gap-2 text-lg font-medium">
-            <img src="/logo.png" alt="UAEMMAF" className="h-8 w-8" />
-            <span className="hidden md:inline">UAEMMAF</span>
+            {/* <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" /> */}
+           
           </div>
           <div className="ml-auto flex items-center gap-2">
             <LanguageSwitcher />
