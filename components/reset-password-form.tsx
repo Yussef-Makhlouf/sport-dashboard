@@ -13,6 +13,9 @@ import { toast } from "@/components/ui/use-toast"
 
 const formSchema = z
   .object({
+    verificationCode: z.string().min(6, {
+      message: "يجب أن يكون الرمز 6 أحرف على الأقل.",
+    }),
     password: z.string().min(8, {
       message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
     }),
@@ -32,6 +35,7 @@ export function ResetPasswordForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      verificationCode: "",
       password: "",
       confirmPassword: "",
     },
@@ -40,7 +44,7 @@ export function ResetPasswordForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    // في تطبيق حقيقي، ستقوم بإرسال كلمة المرور الجديدة إلى API
+    // محاكاة عملية إعادة تعيين كلمة المرور
     setTimeout(() => {
       setIsLoading(false)
 
@@ -57,6 +61,19 @@ export function ResetPasswordForm() {
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="verificationCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الرمز المرسل إلى بريدك الإلكتروني</FormLabel>
+                <FormControl>
+                  <Input placeholder="أدخل الرمز المكون من 6 أحرف" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="password"

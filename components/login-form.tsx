@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { API_URL } from "@/lib/constants";
 import Cookies from 'js-cookie'
+import Link from "next/link"
 
 import * as z from "zod"
 
@@ -136,6 +137,14 @@ export function LoginForm() {
           <Button type="submit" className="w-full bg-[#BB2121] hover:bg-[#C20000]" disabled={isLoading}>
             {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
           </Button>
+          <div className="text-center mt-4">
+            <Link 
+              href="/forgot-password" 
+              className="text-sm text-[#BB2121] hover:text-[#D82F2F] hover:underline"
+            >
+              نسيت كلمة المرور؟
+            </Link>
+          </div>
         </form>
       </Form>
     </div>
