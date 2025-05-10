@@ -53,13 +53,13 @@ export default function LoginPage() {
               transform: `perspective(1000px) rotateX(${mousePosition.y * -5}deg) rotateY(${mousePosition.x * 5}deg) scale3d(1, 1, 1)`,
             }}
           >
-            <div className="absolute -inset-10 bg-[#BB2121]/20 rounded-full blur-3xl opacity-70 animate-pulse-slow" />
+            <div className="absolute -inset-10 bg-[#BB2121]/20 rounded-full blur-3xl opacity-70 animate-pulse-slow p-3" />
             <Image 
               src="/logo3.png" 
               alt="Sport Management Logo" 
-              width={220} 
-              height={220} 
-              className="relative drop-shadow-2xl" 
+              width={260} 
+              height={260} 
+              className="relative drop-shadow-2xl bg-[#BB2121] rounded-full p-3" 
               priority
             />
             <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-white/10 group-hover:ring-white/20" />
