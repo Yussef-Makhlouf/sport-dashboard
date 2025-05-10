@@ -21,11 +21,11 @@ export function DashboardNav() {
       href: "/dashboard/news",
       icon: FileText,
     },
-    {
-      title: t("events.management"),
-      href: "/dashboard/events",
-      icon: Calendar,
-    },
+    // {
+    //   title: t("events.management"),
+    //   href: "/dashboard/events",
+    //   icon: Calendar,
+    // },
     {
       title: t("members.management"),
       href: "/dashboard/members",

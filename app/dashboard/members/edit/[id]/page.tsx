@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { API_URL } from '@/lib/constants';
 
 interface MemberData {
   name: {
@@ -46,7 +47,7 @@ export default function EditMemberPage() {
   useEffect(() => {
     const fetchMember = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/members/getmemberbyid/${params.id}`);
+        const response = await fetch(`${API_URL}/members/getmemberbyid/${params.id}`);
         const data = await response.json();
         
         if (data.member) {
