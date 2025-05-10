@@ -103,7 +103,7 @@ export function ForgotPasswordForm() {
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
+          <FormField    
             control={form.control}
             name="email"
             render={({ field }) => (

@@ -1,10 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import Link from "next/link"
 import Image from "next/image"
-import { ResetPasswordForm } from "@/components/reset-password-form"
+import { useEffect, useState } from "react"
 
-export default function ResetPasswordPage() {
+import { ForgotPasswordForm } from "@/components/forgot-password-form"
+
+export function ForgotPasswordPageClient() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
 
@@ -85,16 +87,27 @@ export default function ResetPasswordPage() {
             <div className="relative z-10">
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  إعادة تعيين كلمة المرور
+                  نسيت كلمة المرور؟
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                  أدخل الرمز المرسل إلى بريدك الإلكتروني وكلمة المرور الجديدة
+                  أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور
                 </p>
               </div>
               
               {/* Form with enhanced styling */}
               <div className="bg-white dark:bg-gray-800/70 rounded-xl p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700/50 max-w-md mx-auto">
-                <ResetPasswordForm />
+                <ForgotPasswordForm />
+              </div>
+              
+              <div className="mt-6 text-center">
+                <p className="text-gray-600 dark:text-gray-400">
+                  <Link 
+                    href="/login" 
+                    className="text-[#BB2121] hover:text-[#D82F2F] font-medium transition-all duration-300 hover:underline"
+                  >
+                    العودة إلى تسجيل الدخول
+                  </Link>
+                </p>
               </div>
             </div>
           </div>
