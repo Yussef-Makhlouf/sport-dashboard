@@ -54,6 +54,13 @@ export function NewsCard({ news, onDelete, variant = "default" }: NewsCardProps)
       other: { ar: "أخرى", en: "Other" },
     }
 
+    // If category is an object with name.ar and name.en, use those values
+    if (typeof category === 'object' && category !== null && 'name' in category) {
+      const cat = category as { name: { ar: string; en: string } }
+      return language === "ar" ? cat.name.ar : cat.name.en
+    }
+
+    // Fallback to the static categories
     return categories[category] ? (language === "ar" ? categories[category].ar : categories[category].en) : category
   }
 
