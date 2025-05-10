@@ -10,11 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
+import { API_URL } from "@/lib/constants"
 
 const formSchema = z
   .object({
     verificationCode: z.string().min(6, {
-      message: "يجب أن يكون الرمز 6 أحرف على الأقل.",
+      message: "يجب أن يكون رمز التحقق 6 أرقام على الأقل.",
     }),
     password: z.string().min(8, {
       message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
@@ -41,20 +42,43 @@ export function ResetPasswordForm() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    // محاكاة عملية إعادة تعيين كلمة المرور
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          verificationCode: parseInt(values.verificationCode),
+          newPassword: values.password,
+          email: localStorage.getItem('resetEmail') // Get email from localStorage
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'حدث خطأ أثناء إعادة تعيين كلمة المرور');
+      }
 
       toast({
         title: "تم إعادة تعيين كلمة المرور",
-        description: "تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة.",
-      })
+        description: data.message,
+      });
 
-      router.push("/login")
-    }, 1000)
+      router.push("/login");
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -66,9 +90,9 @@ export function ResetPasswordForm() {
             name="verificationCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>الرمز المرسل إلى بريدك الإلكتروني</FormLabel>
+                <FormLabel>رمز التحقق</FormLabel>
                 <FormControl>
-                  <Input placeholder="أدخل الرمز المكون من 6 أحرف" {...field} />
+                  <Input placeholder="أدخل رمز التحقق" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
