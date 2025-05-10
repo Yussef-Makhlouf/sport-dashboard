@@ -15,7 +15,7 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: "UAEMMAF - لوحة التحكم",
   description: "لوحة تحكم لإدارة الأخبار والفعاليات الرياضية",
-    generator: 'v0.dev'
+
 }
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <head>
+      <head >
 
         <link rel="icon" href="/favicon.png" sizes="any" />
 
