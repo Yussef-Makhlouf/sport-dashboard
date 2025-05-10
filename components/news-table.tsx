@@ -42,6 +42,13 @@ interface NewsItem {
     _id: string
   }>
   date: string
+  category: {
+    _id: string
+    name: {
+      ar: string
+      en: string
+    }
+  }
 }
 
 export function NewsTable() {
@@ -143,8 +150,18 @@ export function NewsTable() {
       cell: ({ row }) => {
         const news = row.original
         // Add null check for title
-        const title = news.title?.ar|| ""
+        const title = news.title?.ar || ""
         return <div className="font-medium">{title}</div>
+      },
+    },
+    {
+      accessorKey: "category",
+      header: "الفئة",
+      cell: ({ row }) => {
+        const news = row.original
+        // Add null check for category
+        const category = news.category?.name?.ar || ""
+        return <div className="font-medium">{category}</div>
       },
     },
     {
@@ -153,7 +170,7 @@ export function NewsTable() {
       cell: ({ row }) => {
         const news = row.original
         // Add null check for content
-        const content = news.content?.ar|| ""
+        const content = news.content?.ar || ""
         
         // Now content is guaranteed to be a string
         const truncatedContent = content.length > 50 
@@ -185,8 +202,6 @@ export function NewsTable() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
-              <DropdownMenuSeparator />
               {/* <DropdownMenuItem asChild>
                 <Link href={`/dashboard/news/${news._id}`}>
                   <Eye className="ml-2 h-4 w-4" />
