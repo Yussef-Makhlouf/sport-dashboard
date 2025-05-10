@@ -1,8 +1,14 @@
+import type { Metadata } from "next"
 import type React from "react"
 import { DashboardNav } from "@/components/dashboard-nav"
 import { UserNav } from "@/components/user-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
+
+export const metadata: Metadata = {
+  title: "لوحة التحكم | إدارة الرياضة",
+  description: "نظرة عامة على لوحة تحكم إدارة الرياضة",
+}
 
 export default function DashboardLayout({
   children,

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
+import { API_URL } from "@/lib/constants"
 
 const formSchema = z.object({
   email: z.string().email({
@@ -17,6 +19,7 @@ const formSchema = z.object({
 })
 
 export function ForgotPasswordForm() {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
@@ -27,19 +30,45 @@ export function ForgotPasswordForm() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    // في تطبيق حقيقي، ستقوم بإرسال بريد إلكتروني لإعادة تعيين كلمة المرور
-    setTimeout(() => {
-      setIsLoading(false)
-      setIsSubmitted(true)
+    try {
+      const response = await fetch(`${API_URL}/auth/forget-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email
+        }),
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'حدث خطأ أثناء إرسال طلب إعادة تعيين كلمة المرور');
+      }
+
+      // Store email in localStorage for reset password form
+      localStorage.setItem('resetEmail', values.email);
+      
+      setIsSubmitted(true);
       toast({
-        title: "تم إرسال رابط إعادة تعيين كلمة المرور",
-        description: "تحقق من بريدك الإلكتروني للحصول على رابط إعادة تعيين كلمة المرور.",
-      })
-    }, 1000)
+        title: "تم إرسال رمز التحقق",
+        description: data.message,
+      });
+
+      router.push("/reset-password");
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   if (isSubmitted) {
@@ -64,7 +93,7 @@ export function ForgotPasswordForm() {
         </div>
         <h3 className="text-xl font-semibold">تحقق من بريدك الإلكتروني</h3>
         <p className="text-sm text-muted-foreground">
-          لقد أرسلنا لك رابط إعادة تعيين كلمة المرور. يرجى التحقق من بريدك الإلكتروني.
+          لقد أرسلنا لك رمز التحقق. يرجى التحقق من بريدك الإلكتروني.
         </p>
       </div>
     )
@@ -88,7 +117,7 @@ export function ForgotPasswordForm() {
             )}
           />
           <Button type="submit" className="w-full bg-[#BB2121] hover:bg-[#C20000]" disabled={isLoading}>
-            {isLoading ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
+            {isLoading ? "جاري الإرسال..." : "إرسال رمز التحقق"}
           </Button>
         </form>
       </Form>

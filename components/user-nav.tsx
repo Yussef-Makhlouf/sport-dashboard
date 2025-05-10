@@ -12,14 +12,49 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
+import { API_URL } from "@/lib/constants"
+import Cookies from 'js-cookie'
 
 export function UserNav() {
   const router = useRouter()
   const { t } = useLanguage()
 
-  const handleLogout = () => {
-    // In a real application, you would handle logout logic here
-    router.push("/login")
+  const handleLogout = async () => {
+    try {
+      // Get token from cookies
+      const token = Cookies.get('token')
+      
+      if (!token) {
+        router.push("/login")
+        return
+      }
+
+      // Call logout API
+      const response = await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      })
+      
+      const data = await response.json()
+      console.log(data)
+      if (!response.ok) {
+        throw new Error('Failed to logout')
+      }
+
+      // Clear cookies
+      Cookies.remove('token')
+      Cookies.remove('userData')
+      
+      // Redirect to login page
+      router.push("/login")
+    } catch (error) {
+      console.error('Error during logout:', error)
+      // Still redirect to login page even if API call fails
+      router.push("/login")
+    }
   }
 
   return (

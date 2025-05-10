@@ -1,15 +1,52 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/overview"
 import { RecentNews } from "@/components/recent-news"
 import { UpcomingEvents } from "@/components/upcoming-events"
+import { API_URL } from "@/lib/constants"
 
-export const metadata: Metadata = {
-  title: "لوحة التحكم | إدارة الرياضة",
-  description: "نظرة عامة على لوحة تحكم إدارة الرياضة",
+interface DashboardData {
+  message: string
+  members: number
+  news: number
+  users: number
 }
 
 export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/auth/getDashboard`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data')
+        }
+        const data = await response.json()
+        console.log(data)
+        setDashboardData(data)
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
+        <div>جاري التحميل...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
@@ -32,11 +69,11 @@ export default function DashboardPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">142</div>
+            <div className="text-2xl font-bold">{dashboardData?.news || 0}</div>
             <p className="text-xs text-muted-foreground">+12% من الشهر الماضي</p>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">الفعاليات القادمة</CardTitle>
             <svg
@@ -54,15 +91,15 @@ export default function DashboardPage() {
               <line x1="8" x2="8" y1="2" y2="6" />
               <line x1="3" x2="21" y1="10" y2="10" />
             </svg>
-          </CardHeader>
-          <CardContent>
+          </CardHeader> 
+           <CardContent>
             <div className="text-2xl font-bold">24</div>
             <p className="text-xs text-muted-foreground">+4 مجدولة هذا الأسبوع</p>
           </CardContent>
-        </Card>
+        </Card> */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">الفعاليات السابقة</CardTitle>
+            <CardTitle className="text-sm font-medium">الاعضاء</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -81,7 +118,7 @@ export default function DashboardPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">89</div>
+            <div className="text-2xl font-bold">{dashboardData?.members || 0}</div>
             <p className="text-xs text-muted-foreground">+7 من الربع الماضي</p>
           </CardContent>
         </Card>
@@ -105,7 +142,7 @@ export default function DashboardPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{dashboardData?.users || 0}</div>
             <p className="text-xs text-muted-foreground">+2 منذ آخر تسجيل دخول</p>
           </CardContent>
         </Card>

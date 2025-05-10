@@ -1,83 +1,84 @@
 "use client"
 
-import { format } from "date-fns"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState } from "react"
+import { API_URL } from "@/lib/constants"
+import { Card, CardContent } from "@/components/ui/card"
 import { useLanguage } from "@/components/language-provider"
-import { arEG } from "date-fns/locale"
 
-// Sample data - in a real app, this would come from an API
-const recentNews = [
-  {
-    id: "1",
-    title: "الفريق يفوز بالبطولة",
-    publishedAt: new Date("2023-06-15"),
-    author: {
-      name: "أحمد محمد",
-      avatar: "/placeholder.svg",
-      initials: "أم",
-    },
-  },
-  {
-    id: "2",
-    title: "التعاقد مع لاعب جديد",
-    publishedAt: new Date("2023-06-12"),
-    author: {
-      name: "سارة علي",
-      avatar: "/placeholder.svg",
-      initials: "سع",
-    },
-  },
-  {
-    id: "3",
-    title: "اكتمال تجديد الملعب",
-    publishedAt: new Date("2023-06-10"),
-    author: {
-      name: "محمد خالد",
-      avatar: "/placeholder.svg",
-      initials: "مخ",
-    },
-  },
-  {
-    id: "4",
-    title: "مقابلة مع المدرب",
-    publishedAt: new Date("2023-06-08"),
-    author: {
-      name: "ليلى أحمد",
-      avatar: "/placeholder.svg",
-      initials: "لأ",
-    },
-  },
-  {
-    id: "5",
-    title: "تذاكر الموسم متاحة الآن",
-    publishedAt: new Date("2023-06-05"),
-    author: {
-      name: "عمر حسن",
-      avatar: "/placeholder.svg",
-      initials: "عح",
-    },
-  },
-]
+interface NewsItem {
+  _id: string
+  title: {
+    ar: string
+    en: string
+  }
+  content: {
+    ar: string
+    en: string
+  }
+  image: Array<{
+    secure_url: string
+    public_id: string
+  }>
+  date: string
+}
 
 export function RecentNews() {
-  const { language, t } = useLanguage()
+  const [news, setNews] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const { language } = useLanguage()
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await fetch(`${API_URL}/news/getallnews`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch news")
+        }
+        const data = await response.json()
+        // Get only the last 10 news items
+        setNews(data.news.slice(0, 3))
+      } catch (error) {
+        console.error("Error fetching news:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNews()
+  }, [])
+
+  if (loading) {
+    return <div>جاري التحميل...</div>
+  }
 
   return (
-    <div className="space-y-8">
-      {recentNews.map((item) => (
-        <div key={item.id} className="flex items-center">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={item.author.avatar || "/placeholder.svg"} alt={item.author.name} />
-            <AvatarFallback>{item.author.initials}</AvatarFallback>
-          </Avatar>
-          <div className="mr-4 space-y-1">
-            <p className="text-sm font-medium leading-none">{item.title}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("by")} {item.author.name} {t("on")}{" "}
-              {format(item.publishedAt, "d MMMM yyyy", { locale: language === "ar" ? arEG : undefined })}
-            </p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {news.map((item) => (
+        <Card key={item._id} className="overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex gap-4">
+              {item.image[0] && (
+                <img
+                  src={item.image[0].secure_url}
+                  alt={item.title[language]}
+                  className="h-20 w-20 object-cover rounded-md"
+                />
+              )}
+              <div className="flex-1">
+                <h3 className="font-semibold line-clamp-2">
+                  {item.title[language]}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {new Date(item.date).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )
