@@ -6,6 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { X } from "lucide-react" // Import X icon for delete button
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { ar } from "date-fns/locale"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -31,6 +36,9 @@ const formSchema = z.object({
     message: "Content must be at least 10 characters.",
   }),
   category: z.string().optional(),
+  date: z.date({
+    required_error: "Please select a date",
+  }),
 })
 
 interface Category {
@@ -53,11 +61,11 @@ interface NewsFormProps {
       en: string
     }
     category?: string
-    image?: {
+    date?: string
+    image?: Array<{
       secure_url: string
-    }
-    images?: Array<{
-      secure_url: string
+      public_id: string
+      _id: string
     }>
   }
 }
@@ -77,14 +85,9 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     if (initialData) {
       const initialImages: string[] = []
       
-      // Add main image if exists
-      if (initialData.image?.secure_url) {
-        initialImages.push(initialData.image.secure_url)
-      }
-      
-      // Add additional images if they exist
-      if (initialData.images && initialData.images.length > 0) {
-        initialData.images.forEach(img => {
+      // Add all images from the image array if they exist
+      if (initialData.image && Array.isArray(initialData.image)) {
+        initialData.image.forEach(img => {
           if (img.secure_url) initialImages.push(img.secure_url)
         })
       }
@@ -132,6 +135,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
           content_ar: initialData.content?.ar || "",
           content_en: initialData.content?.en || "",
           category: initialData.category || "",
+          date: initialData.date ? new Date(initialData.date) : new Date(),
         }
       : {
           title_ar: "",
@@ -139,6 +143,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
           content_ar: "",
           content_en: "",
           category: "",
+          date: new Date(),
         },
   })
 
@@ -146,12 +151,13 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     const files = e.target.files
     if (!files || files.length === 0) return
     
-    // Check if adding these files would exceed the limit of 4 images
-    if (selectedImages.length + files.length + previewUrls.length > 4) {
+    // Check if adding these files would exceed the limit of 3 images
+    if (selectedImages.length + files.length + previewUrls.length > 3) {
       toast({
         title: "تنبيه",
-        description: "يمكنك إضافة 4 صور كحد أقصى",
+        description: "يمكنك إضافة 3 صور كحد أقصى",
         variant: "destructive",
+        duration: 3000,
       })
       return
     }
@@ -202,6 +208,19 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
           title: "خطأ",
           description: "يرجى اختيار صورة واحدة على الأقل للخبر",
           variant: "destructive",
+          duration: 3000,
+        })
+        setIsLoading(false)
+        return
+      }
+
+      // Check if total images exceed the limit of 3
+      if (previewUrls.length > 3) {
+        toast({
+          title: "خطأ",
+          description: "يمكنك إضافة 3 صور كحد أقصى",
+          variant: "destructive",
+          duration: 3000,
         })
         setIsLoading(false)
         return
@@ -212,7 +231,13 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       
       // Add all form values to FormData
       Object.entries(values).forEach(([key, value]) => {
-        if (value) formData.append(key, value)
+        if (value) {
+          if (key === 'date') {
+            formData.append(key, (value as Date).toISOString())
+          } else {
+            formData.append(key, String(value))
+          }
+        }
       })
       
       // Add all selected images to FormData
@@ -241,6 +266,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       toast({
         title: initialData ? "تم تحديث الخبر" : "تم إنشاء الخبر",
         description: initialData ? "تم تحديث الخبر بنجاح." : "تم إنشاء الخبر بنجاح.",
+        duration: 3000,
       })
 
       // Redirect to news list
@@ -252,6 +278,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         title: "خطأ",
         description: error instanceof Error ? error.message : "حدث خطأ أثناء حفظ الخبر",
         variant: "destructive",
+        duration: 3000,
       })
     } finally {
       setIsLoading(false)
@@ -362,9 +389,51 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
+          {/* Date Field */}
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>تاريخ الخبر</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={`w-full pl-3 text-right font-normal ${
+                          !field.value && "text-muted-foreground"
+                        }`}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP", { locale: ar })
+                        ) : (
+                          <span>اختر التاريخ</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Multiple Image Upload */}
           <div className="col-span-1 md:col-span-2">
-            <FormLabel>صور الخبر (الحد الأقصى 4 صور)</FormLabel>
+            <FormLabel>صور الخبر (الحد الأقصى 3 صور)</FormLabel>
             <div className="mt-2 flex flex-col space-y-4">
               <input
                 type="file"
@@ -381,10 +450,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                 variant="outline" 
                 onClick={triggerFileInput}
                 className="w-full h-16 border-dashed"
-                disabled={previewUrls.length >= 4}
+                disabled={previewUrls.length >= 3}
               >
                 {previewUrls.length > 0 
-                  ? `إضافة صورة (${previewUrls.length}/4)` 
+                  ? `إضافة صورة (${previewUrls.length}/3)` 
                   : "اختر صورة"}
               </Button>
               
@@ -417,7 +486,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
               {!initialData && previewUrls.length === 0 && (
                 <p className="text-sm text-red-500">* يجب إضافة صورة واحدة على الأقل</p>
               )}
-            </div>
+            </div>  
           </div>
         </div>
 

@@ -92,36 +92,22 @@ export default function EditMemberPage() {
     setLoading(true);
 
     try {
-      let imageData = formData.image;
+      const formDataToSend = new FormData();
+      
+      // Add member data
+      formDataToSend.append("name[ar]", formData.name.ar);
+      formDataToSend.append("name[en]", formData.name.en);
+      formDataToSend.append("position[ar]", formData.position.ar);
+      formDataToSend.append("position[en]", formData.position.en);
 
+      // Add image if available
       if (selectedFile) {
-        const formDataImage = new FormData();
-        formDataImage.append('file', selectedFile);
-        
-        // Upload image first
-        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload`, {
-          method: 'POST',
-          body: formDataImage,
-        });
-        
-        const uploadData = await uploadResponse.json();
-        if (uploadData.secure_url) {
-          imageData = {
-            secure_url: uploadData.secure_url,
-            public_id: uploadData.public_id
-          };
-        }
+        formDataToSend.append("image", selectedFile);
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/members/${params.id}`, {
+      const response = await fetch(`${API_URL}/members/${params.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          image: imageData
-        }),
+        body: formDataToSend,
       });
 
       const data = await response.json();
@@ -131,9 +117,10 @@ export default function EditMemberPage() {
         router.push('/dashboard/members');
       } else {
         // toast.error(data.message || 'Failed to update member');
+        console.error('Update failed:', data.message);
       }
     } catch (error) {
-    //   toast.error('An error occurred while updating the member');
+      // toast.error('An error occurred while updating the member');
       console.error('Error updating member:', error);
     } finally {
       setLoading(false);

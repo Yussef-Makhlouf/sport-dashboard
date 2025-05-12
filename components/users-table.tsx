@@ -33,6 +33,10 @@ interface User {
   role: string
   isActive: boolean
   createdAt: string
+  image: {
+    secure_url: string
+    public_id: string
+  }
 }
 
 export function UsersTable() {
@@ -61,10 +65,11 @@ export function UsersTable() {
           name: user.userName,
           email: user.email,
           role: user.role === "مدير" ? "admin" : user.role === "محرر" ? "editor" : "viewer",
-          avatar: "/placeholder.svg",
+          avatar: user.image?.secure_url || "/placeholder.svg",
           initials: user.userName.substring(0, 2),
           phoneNumber: user.phoneNumber,
-          isActive: user.isActive
+          isActive: user.isActive,
+          image: user.image?.secure_url || "/placeholder.svg"
         }))
         
         setTableData(formattedData)
@@ -145,10 +150,12 @@ export function UsersTable() {
       header: "المستخدم",
       cell: ({ row }) => {
         const user = row.original
+        console.log(user);
+        
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+              <AvatarImage src={user.image} alt={user.name} />
               <AvatarFallback>{user.initials}</AvatarFallback>
             </Avatar>
             <div>

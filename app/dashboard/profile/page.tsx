@@ -63,7 +63,8 @@ export default async function ProfilePage() {
     email: userData.email,
     phoneNumber: userData.phoneNumber || '',
     role: userData.role,
-    status: userData.isActive ? 'active' : 'inactive'
+    status: userData.isActive ? 'active' : 'inactive',
+    image: userData.image || { secure_url: '', public_id: '' }
   }
 
   return (

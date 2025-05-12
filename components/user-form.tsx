@@ -40,7 +40,27 @@ const formSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-})
+  confirmPassword: z
+    .string()
+    .min(8, {
+      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
+    })
+    .optional()
+    .or(z.literal("")),
+  image: z.object({
+    secure_url: z.string(),
+    public_id: z.string()
+  }).optional()
+}).refine((data) => {
+  // Only validate password confirmation if password is provided
+  if (data.password) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "كلمات المرور غير متطابقة.",
+  path: ["confirmPassword"],
+});
 
 interface UserFormProps {
   initialData?: {
@@ -50,12 +70,18 @@ interface UserFormProps {
     phoneNumber: string
     role: string
     status: string
+    image?: {
+      secure_url: string
+      public_id: string
+    }
   }
 }
 
 export function UserForm({ initialData }: UserFormProps = {}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>(initialData?.image?.secure_url || '')
   const { t } = useLanguage()
   
   console.log("UserForm component rendered", { initialData });
@@ -70,6 +96,8 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           role: initialData.role as "مدير" | "محرر" | "مستخدم",
           status: initialData.status as "active" | "inactive",
           password: "",
+          confirmPassword: "",
+          image: initialData.image
         }
       : {
           name: "",
@@ -78,8 +106,22 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           role: "محرر",
           status: "active",
           password: "",
+          confirmPassword: "",
+          image: { secure_url: "", public_id: "" }
         },
   })
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log("Form submitted with values:", values);
@@ -90,20 +132,22 @@ export function UserForm({ initialData }: UserFormProps = {}) {
         console.log("Updating existing user:", initialData.id);
         const apiUrl = `${API_URL}/auth/update/${initialData.id}`;
         
-        const userData = {
-          userName: values.name,
-          email: values.email,
-          phoneNumber: values.phoneNumber,
-          role: values.role,
-          isActive: values.status === "active"
-        };
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('userName', values.name);
+        formData.append('email', values.email);
+        formData.append('phoneNumber', values.phoneNumber);
+        formData.append('role', values.role);
+        formData.append('isActive', values.status === 'active' ? 'true' : 'false');
+        formData.append('password', values.password || '');
+        
+        if (imageFile) {
+          formData.append('image', imageFile);
+        }
 
         const response = await fetch(apiUrl, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userData),
+          body: formData,
         });
 
         if (!response.ok) {
@@ -127,7 +171,8 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           email: values.email,
           password: values.password,
           phoneNumber: values.phoneNumber,
-          role: values.role
+          role: values.role,
+          isActive: values.status === 'active'
         };
         console.log("Sending user data:", userData);
         
@@ -272,21 +317,62 @@ export function UserForm({ initialData }: UserFormProps = {}) {
             )}
           />
 
-          {!initialData && (
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("password")}</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("password")}</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("confirm.password")}</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="image"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("profile.image")}</FormLabel>
+                <FormControl>
+                  <div className="flex flex-col gap-4">
+                    {imagePreview && (
+                      <div className="w-32 h-32 relative overflow-hidden rounded-full">
+                        <img
+                          src={imagePreview}
+                          alt="Profile preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="flex gap-4">
