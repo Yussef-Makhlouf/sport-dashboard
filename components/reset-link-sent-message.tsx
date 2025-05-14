@@ -1,8 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useLanguage } from "@/components/language-provider"
 
 export function ResetLinkSentMessage() {
+  const { t } = useLanguage()
+  
   return (
     <div className="flex flex-col items-center justify-center space-y-4 text-center">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -22,16 +25,16 @@ export function ResetLinkSentMessage() {
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
       </div>
-      <h3 className="text-xl font-semibold">تم إرسال رابط إعادة التعيين</h3>
+      <h3 className="text-xl font-semibold">{t("check.email")}</h3>
       <p className="text-sm text-muted-foreground">
-        لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد الخاص بك.
+        {t("check.email.description")}
       </p>
       <div className="mt-4">
         <Link 
           href="/login" 
           className="text-sm text-[#BB2121] hover:text-[#D82F2F] hover:underline"
         >
-          العودة إلى صفحة تسجيل الدخول
+          {t("back.to.login")}
         </Link>
       </div>
     </div>

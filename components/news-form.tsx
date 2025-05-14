@@ -264,8 +264,8 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       }
 
       toast({
-        title: initialData ? "تم تحديث الخبر" : "تم إنشاء الخبر",
-        description: initialData ? "تم تحديث الخبر بنجاح." : "تم إنشاء الخبر بنجاح.",
+        title: initialData ? t("update.news.success.title") : t("create.news.success.title"),
+        description: initialData ? t("update.news.success.description") : t("create.news.success.description"),
         duration: 3000,
       })
 
@@ -275,8 +275,8 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     } catch (error) {
       console.error("Error saving news:", error)
       toast({
-        title: "خطأ",
-        description: error instanceof Error ? error.message : "حدث خطأ أثناء حفظ الخبر",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t("news.save.error"),
         variant: "destructive",
         duration: 3000,
       })
@@ -295,9 +295,9 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             name="title_ar"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>العنوان (بالعربية)</FormLabel>
+                <FormLabel>{t("news.title.ar")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="أدخل عنوان الخبر بالعربية" {...field} />
+                  <Input placeholder={t("news.title.ar.placeholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -310,9 +310,9 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             name="title_en"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>العنوان (بالإنجليزية)</FormLabel>
+                <FormLabel>{t("news.title.en")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter news title in English" {...field} />
+                  <Input placeholder={t("news.title.en.placeholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -325,10 +325,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             name="content_ar"
             render={({ field }) => (
               <FormItem className="col-span-1 md:col-span-2">
-                <FormLabel>المحتوى (بالعربية)</FormLabel>
+                <FormLabel>{t("news.content.ar")}</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="أدخل محتوى الخبر بالعربية" 
+                    placeholder={t("news.content.ar.placeholder")} 
                     className="min-h-[150px]" 
                     {...field} 
                   />
@@ -344,10 +344,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             name="content_en"
             render={({ field }) => (
               <FormItem className="col-span-1 md:col-span-2">
-                <FormLabel>المحتوى (بالإنجليزية)</FormLabel>
+                <FormLabel>{t("news.content.en")}</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="Enter news content in English" 
+                    placeholder={t("news.content.en.placeholder")} 
                     className="min-h-[150px]" 
                     {...field} 
                   />
@@ -363,16 +363,16 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>الفئة</FormLabel>
+                <FormLabel>{t("news.category")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر فئة الخبر" />
+                      <SelectValue placeholder={t("news.category.placeholder")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {isLoadingCategories ? (
-                      <SelectItem value="loading" disabled>جاري تحميل الفئات...</SelectItem>
+                      <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
                     ) : categories.length > 0 ? (
                       categories.map((category) => (
                         <SelectItem key={category._id} value={category._id}>
@@ -380,7 +380,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="no-categories" disabled>لا توجد فئات متاحة</SelectItem>
+                      <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -395,7 +395,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>تاريخ الخبر</FormLabel>
+                <FormLabel>{t("publication.date")}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -408,7 +408,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                         {field.value ? (
                           format(field.value, "PPP", { locale: ar })
                         ) : (
-                          <span>اختر التاريخ</span>
+                          <span>{t("select.date")}</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -433,7 +433,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
 
           {/* Multiple Image Upload */}
           <div className="col-span-1 md:col-span-2">
-            <FormLabel>صور الخبر (الحد الأقصى 3 صور)</FormLabel>
+            <FormLabel>{t("news.images")}</FormLabel>
             <div className="mt-2 flex flex-col space-y-4">
               <input
                 type="file"
@@ -453,8 +453,8 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                 disabled={previewUrls.length >= 3}
               >
                 {previewUrls.length > 0 
-                  ? `إضافة صورة (${previewUrls.length}/3)` 
-                  : "اختر صورة"}
+                  ? `${t("add.image")} (${previewUrls.length}/3)` 
+                  : t("choose.image")}
               </Button>
               
               {/* Image previews */}
@@ -465,7 +465,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                       <div className="relative w-full h-48 rounded-md overflow-hidden border">
                         <img 
                           src={url} 
-                          alt={`Preview ${index + 1}`} 
+                          alt={`${t("preview")} ${index + 1}`} 
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -484,7 +484,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
               )}
               
               {!initialData && previewUrls.length === 0 && (
-                <p className="text-sm text-red-500">* يجب إضافة صورة واحدة على الأقل</p>
+                <p className="text-sm text-red-500">* {t("image.required")}</p>
               )}
             </div>  
           </div>
@@ -496,14 +496,14 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             className="bg-[#BB2121] hover:bg-[#C20000]" 
             disabled={isLoading}
           >
-            {isLoading ? "جاري الحفظ..." : initialData ? "تحديث الخبر" : "إنشاء خبر جديد"}
+            {isLoading ? t("saving") : initialData ? t("update.news") : t("create.news.button")}
           </Button>
           <Button 
             type="button" 
             variant="outline" 
             onClick={() => router.push("/dashboard/news")}
           >
-            إلغاء
+            {t("cancel")}
           </Button>
         </div>
       </form>

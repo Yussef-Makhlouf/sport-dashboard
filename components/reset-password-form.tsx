@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import { useLanguage } from "@/components/language-provider"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -12,26 +13,34 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { API_URL } from "@/lib/constants"
 
-const formSchema = z
-  .object({
-    verificationCode: z.string().min(6, {
-      message: "يجب أن يكون رمز التحقق 6 أرقام على الأقل.",
-    }),
-    password: z.string().min(8, {
-      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-    }),
-    confirmPassword: z.string().min(8, {
-      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "كلمات المرور غير متطابقة.",
-    path: ["confirmPassword"],
-  })
-
 export function ResetPasswordForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const { t, language } = useLanguage()
+
+  // Dynamic form schema based on current language
+  const formSchema = z
+    .object({
+      verificationCode: z.string().min(6, {
+        message: language === "ar"
+          ? "يجب أن يكون رمز التحقق 6 أرقام على الأقل."
+          : "Verification code must be at least 6 digits.",
+      }),
+      password: z.string().min(8, {
+        message: language === "ar"
+          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
+          : "Password must be at least 8 characters.",
+      }),
+      confirmPassword: z.string().min(8, {
+        message: language === "ar"
+          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
+          : "Password must be at least 8 characters.",
+      }),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: language === "ar" ? "كلمات المرور غير متطابقة." : "Passwords do not match.",
+      path: ["confirmPassword"],
+    })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,22 +67,48 @@ export function ResetPasswordForm() {
         }),
       });
 
-      const data = await response.json();
+      // Debug response info
+      const contentType = response.headers.get('content-type');
+      console.log('Response status:', response.status);
+      console.log('Response content-type:', contentType);
+      
+      let data;
+      
+      // Handle different response types
+      if (!contentType || !contentType.includes('application/json')) {
+        // For non-JSON responses, try to get the text content for better error handling
+        const textResponse = await response.text();
+        console.log('Raw server response:', textResponse);
+        
+        // Try to parse text as JSON in case the Content-Type header is wrong
+        try {
+          data = JSON.parse(textResponse);
+        } catch (parseError) {
+          // If it's truly not JSON, throw error with the response text if available
+          throw new Error(`API returned non-JSON response: ${textResponse.substring(0, 100) || 'Empty response'}`);
+        }
+      } else {
+        // Regular JSON parsing
+        data = await response.json();
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'حدث خطأ أثناء إعادة تعيين كلمة المرور');
+        throw new Error(data.message || (language === "ar"
+          ? 'حدث خطأ أثناء إعادة تعيين كلمة المرور'
+          : 'Error resetting password'));
       }
 
       toast({
-        title: "تم إعادة تعيين كلمة المرور",
+        title: t("reset.password"),
         description: data.message,
       });
 
       router.push("/login");
     } catch (error) {
+      console.error('Error resetting password:', error);
       toast({
-        title: "خطأ",
-        description: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
+        title: t("error"),
+        description: error instanceof Error ? error.message : t("error"),
         variant: "destructive",
       });
     } finally {
@@ -90,9 +125,9 @@ export function ResetPasswordForm() {
             name="verificationCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>رمز التحقق</FormLabel>
+                <FormLabel>{language === "ar" ? "رمز التحقق" : "Verification Code"}</FormLabel>
                 <FormControl>
-                  <Input placeholder="أدخل رمز التحقق" {...field} />
+                  <Input placeholder={language === "ar" ? "أدخل رمز التحقق" : "Enter verification code"} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -103,7 +138,7 @@ export function ResetPasswordForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>كلمة المرور الجديدة</FormLabel>
+                <FormLabel>{t("new.password")}</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="••••••••" {...field} />
                 </FormControl>
@@ -116,7 +151,7 @@ export function ResetPasswordForm() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>تأكيد كلمة المرور</FormLabel>
+                <FormLabel>{t("confirm.password")}</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="••••••••" {...field} />
                 </FormControl>
@@ -125,7 +160,7 @@ export function ResetPasswordForm() {
             )}
           />
           <Button type="submit" className="w-full bg-[#BB2121] hover:bg-[#C20000]" disabled={isLoading}>
-            {isLoading ? "جاري إعادة التعيين..." : "إعادة تعيين كلمة المرور"}
+            {isLoading ? t("saving") : t("reset.password")}
           </Button>
         </form>
       </Form>

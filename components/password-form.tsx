@@ -11,26 +11,33 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 
-const formSchema = z
-  .object({
-    currentPassword: z.string().min(8, {
-      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-    }),
-    newPassword: z.string().min(8, {
-      message: "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل.",
-    }),
-    confirmPassword: z.string().min(8, {
-      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-    }),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "كلمات المرور غير متطابقة.",
-    path: ["confirmPassword"],
-  })
-
 export function PasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+
+  // Dynamic form schema based on current language
+  const formSchema = z
+    .object({
+      currentPassword: z.string().min(8, {
+        message: language === "ar" 
+          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
+          : "Password must be at least 8 characters.",
+      }),
+      newPassword: z.string().min(8, {
+        message: language === "ar" 
+          ? "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل."
+          : "New password must be at least 8 characters.",
+      }),
+      confirmPassword: z.string().min(8, {
+        message: language === "ar" 
+          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
+          : "Password must be at least 8 characters.",
+      }),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: language === "ar" ? "كلمات المرور غير متطابقة." : "Passwords do not match.",
+      path: ["confirmPassword"],
+    })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,8 +56,8 @@ export function PasswordForm() {
       setIsLoading(false)
 
       toast({
-        title: "تم تغيير كلمة المرور",
-        description: "تم تغيير كلمة المرور بنجاح.",
+        title: language === "ar" ? "تم تغيير كلمة المرور" : "Password Changed",
+        description: language === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Your password has been changed successfully.",
       })
 
       form.reset()

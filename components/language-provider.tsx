@@ -10,6 +10,7 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => void
   t: (key: string) => string
   dir: "rtl" | "ltr"
+  isLoaded: boolean
 }
 
 const translations = {
@@ -27,8 +28,10 @@ const translations = {
     "back.to.login": "العودة إلى تسجيل الدخول",
     "check.email": "تحقق من بريدك الإلكتروني",
     "check.email.description": "لقد أرسلنا لك رابط إعادة تعيين كلمة المرور. يرجى التحقق من بريدك الإلكتروني.",
-
-    // Dashboard
+    "welcome.back": "مرحباً بك مجدداً",
+    "enter.credentials": "أدخل بياناتك للوصول إلى لوحة التحكم",
+    "reset.password": "إعادة تعيين كلمة المرور",
+    "reset.password.description": "أدخل كلمة المرور الجديدة لحسابك",
 
     // Dashboard
     dashboard: "لوحة التحكم",
@@ -37,9 +40,29 @@ const translations = {
     "members.management": "إدارة الأعضاء",
     "user.management": "إدارة المستخدمين",
     profile: "الملف الشخصي",
+    
+
     logout: "تسجيل الخروج",
     "switch.language": "تبديل اللغة",
-"add.member": "إضافة عضو",
+    "add.member": "إضافة عضو",
+    "system.settings": "إعدادات النظام",
+    "dashboard.title": "لوحة التحكم | إدارة الرياضة",
+    "dashboard.description": "نظرة عامة على لوحة تحكم إدارة الرياضة",
+    "news.title": "إدارة الأخبار | إدارة الرياضة",
+    "news.description": "إدارة المقالات الإخبارية للموقع الرياضي",
+    "events.title": "إدارة الفعاليات | إدارة الرياضة",
+    "events.description": "إدارة الفعاليات للموقع الرياضي",
+    "users.title": "إدارة المستخدمين | إدارة الرياضة",
+    "users.description": "إدارة مستخدمي النظام",
+    "settings.title": "الإعدادات | إدارة الرياضة",
+    "settings.description": "إعدادات النظام",
+    "create.event.title": "إنشاء فعالية | إدارة الرياضة",
+    "create.event.description": "إنشاء فعالية جديدة",
+    "edit.event.title": "تعديل فعالية | إدارة الرياضة",
+    "edit.event.description": "تعديل فعالية موجودة",
+    "create.user.title": "إنشاء مستخدم | إدارة الرياضة",
+    "create.user.description": "إنشاء مستخدم جديد",
+
     // Stats
     "total.news": "إجمالي الأخبار",
     "upcoming.events": "الفعاليات القادمة",
@@ -49,6 +72,15 @@ const translations = {
     "scheduled.this.week": "مجدولة هذا الأسبوع",
     "from.last.quarter": "من الربع الماضي",
     "since.last.login": "منذ آخر تسجيل دخول",
+    members: "الاعضاء",
+    "member.profile": "الملف الشخصي",
+
+    "other.language": "اللغة الأخرى",
+    "member.not.found": "عضو غير موجود",
+    "back.to.members": "العودة إلى قائمة الأعضاء",
+    "edit.member": "تعديل العضو",
+    "description": "الوصف",
+    "position": "الموقع",
 
     // Content
     "content.overview": "نظرة عامة على المحتوى",
@@ -61,24 +93,50 @@ const translations = {
     "add.news": "إضافة خبر",
     "create.news": "إنشاء خبر جديد",
     "edit.news": "تعديل الخبر",
-    "news.title": "عنوان الخبر",
+    "news.title.ar": "عنوان الخبر",
+    "news.title.en": "العنوان (بالإنجليزية)",
+    "news.title.ar.placeholder": "أدخل عنوان الخبر بالعربية",
+    "news.title.en.placeholder": "أدخل عنوان الخبر بالإنجليزية",
+    "news.content.ar": "المحتوى (بالعربية)",
+    "news.content.en": "المحتوى (بالإنجليزية)",
+    "news.content.ar.placeholder": "أدخل محتوى الخبر بالعربية",
+    "news.content.en.placeholder": "أدخل محتوى الخبر بالإنجليزية",
     content: "المحتوى",
     "publication.date": "تاريخ النشر",
+    "select.date": "اختر التاريخ",
     image: "الصورة",
+    "news.images": "صور الخبر (الحد الأقصى 3 صور)",
     "upload.image": "رفع صورة",
+    "add.image": "إضافة صورة",
+    "choose.image": "اختر صورة",
     "change.image": "تغيير الصورة",
     "no.image.uploaded": "لم يتم رفع صورة",
+    "image.required": "يجب إضافة صورة واحدة على الأقل",
     "update.news": "تحديث الخبر",
-    "create.news.button": "إنشاء الخبر",
-    cancel: "إلغاء",
+    "update.news.success.title": "تم تحديث الخبر",
+    "update.news.success.description": "تم تحديث الخبر بنجاح.",
+    "create.news.success.title": "تم إنشاء الخبر",
+    "create.news.success.description": "تم إنشاء الخبر بنجاح.",
+    "news.save.error": "حدث خطأ أثناء حفظ الخبر",
+    "news.category.placeholder": "اختر فئة الخبر",
+    "loading.categories": "جاري تحميل الفئات...",
+    "no.categories.available": "لا توجد فئات متاحة",
+    "create.news.button": "إنشاء خبر جديد",
     "news.category": "تصنيف الخبر",
     "news.featured": "مميز",
     "news.language": "اللغة",
-    "news.preview": "معاينة",
     "news.publish": "نشر",
     "news.unpublish": "إلغاء النشر",
     "news.delete": "حذف",
     "news.view": "عرض",
+    "news.management.title": "إدارة الأخبار",
+    "news.delete.success": "تم حذف المقال الإخباري بنجاح.",
+    "news.delete.error": "فشل حذف المقال الإخباري. يرجى المحاولة مرة أخرى.",
+    "open.menu": "فتح القائمة",
+    "edit.news.title": "تعديل خبر | إدارة الرياضة",
+    "edit.news.description": "تعديل مقال إخباري موجود",
+    "news.not.found": "لم يتم العثور على المقال الإخباري",
+    "news.not.found.error": "لم يتم العثور على المقال الإخباري. قد يكون تم حذفه أو تحريكه.",
 
     // Events
     "add.event": "إضافة فعالية",
@@ -102,6 +160,15 @@ const translations = {
     past: "سابقة",
     "update.event": "تحديث الفعالية",
     "create.event.button": "إنشاء الفعالية",
+    "events.management.title": "إدارة الفعاليات",
+    "event.save.draft": "حفظ كمسودة",
+    tournament: "بطولة",
+    championship: "دوري",
+    seminar: "ندوة",
+    training: "تدريب",
+    exhibition: "معرض",
+    conference: "مؤتمر",
+    other: "أخرى",
 
     // Users
     users: "المستخدمين",
@@ -118,6 +185,17 @@ const translations = {
     inactive: "غير نشط",
     "update.user": "تحديث المستخدم",
     "create.user.button": "إنشاء المستخدم",
+    "user.management.title": "إدارة المستخدمين",
+    "user.delete.success.title": "تم حذف المستخدم",
+    "user.delete.success.description": "تم حذف المستخدم بنجاح.",
+    "user.delete.error": "حدث خطأ أثناء حذف المستخدم. يرجى المحاولة مرة أخرى.",
+    "user.fetch.error": "حدث خطأ أثناء جلب بيانات المستخدم. يرجى المحاولة مرة أخرى.",
+    "users.load.error": "فشل في تحميل المستخدمين. يرجى المحاولة مرة أخرى لاحقًا.",
+    "user.not.found": "لم يتم العثور على المستخدم",
+    "user.not.found.error": "لم يتم العثور على المستخدم. قد يكون تم حذفه أو تحريكه.",
+    "phone.number": "رقم الهاتف",
+    user: "المستخدم",
+    "profile.image": "الصورة الشخصية",
 
     // Table
     actions: "الإجراءات",
@@ -137,6 +215,20 @@ const translations = {
     "new.password": "كلمة المرور الجديدة",
     "confirm.password": "تأكيد كلمة المرور",
     "profile.picture": "الصورة الشخصية",
+    "profile.not.found": "لم يتم العثور على الملف الشخصي",
+    "profile.data.error": "حدث خطأ أثناء جلب بيانات الملف الشخصي",
+
+    // Settings
+    "general.settings": "الإعدادات العامة",
+    language: "اللغة",
+    arabic: "العربية",
+    english: "الإنجليزية",
+    notifications: "الإشعارات",
+    "notifications.description": "إدارة إعدادات الإشعارات الخاصة بك",
+    "email.notifications": "إشعارات البريد الإلكتروني",
+    "email.notifications.description": "تلقي إشعارات عبر البريد الإلكتروني عند إضافة محتوى جديد أو تحديثه.",
+    "push.notifications": "الإشعارات الفورية",
+    "push.notifications.description": "تلقي إشعارات فورية عند إضافة محتوى جديد أو تحديثه.",
 
     // Months
     jan: "يناير",
@@ -152,17 +244,25 @@ const translations = {
     nov: "نوفمبر",
     dec: "ديسمبر",
 
+    // Footer
+    copyright: "© {year} إدارة الرياضة. جميع الحقوق محفوظة.",
+    
+    // Platform
+    "platform.description": "منصة متكاملة لإدارة الأنشطة الرياضية والفعاليات بكفاءة عالية",
+    "platform.features": "مميزات النظام",
+    "platform.easy.management": "إدارة سهلة",
+    "platform.easy.management.description": "واجهة سهلة الاستخدام لإدارة جميع الأنشطة والفعاليات الرياضية",
+    "platform.secure": "آمن وموثوق",
+    "platform.secure.description": "حماية كاملة للبيانات والمعلومات الخاصة بك مع تشفير متقدم",
+    "platform.analytics": "تحليلات متقدمة",
+    "platform.analytics.description": "رؤى وتحليلات شاملة لمساعدتك على اتخاذ قرارات أفضل",
+
     // Misc
     by: "بواسطة",
     on: "في",
     "pick.a.date": "اختر تاريخًا",
     "select.event.type": "اختر نوع الفعالية",
     "enter.event.location": "أدخل موقع الفعالية",
-    saving: "جاري الحفظ...",
-    sending: "جاري الإرسال...",
-    "logging.in": "جاري تسجيل الدخول...",
-    required: "مطلوب",
-    optional: "اختياري",
     "select.option": "اختر خيارًا",
     "search.placeholder": "بحث...",
     "filter.by": "تصفية حسب",
@@ -182,15 +282,11 @@ const translations = {
     warning: "تحذير",
     info: "معلومات",
     confirm: "تأكيد",
-    // cancel: "إلغاء",
     close: "إغلاق",
     save: "حفظ",
     add: "إضافة",
     remove: "إزالة",
-    // edit: "تعديل",
-    // delete: "حذف",
     view: "عرض",
-    preview: "معاينة",
     download: "تنزيل",
     upload: "رفع",
     copy: "نسخ",
@@ -214,6 +310,15 @@ const translations = {
     collapse: "طي",
     details: "تفاصيل",
     summary: "ملخص",
+
+    // UI Common
+    cancel: "إلغاء",
+    saving: "جاري الحفظ...",
+    sending: "جاري الإرسال...",
+    "logging.in": "جاري تسجيل الدخول...",
+    required: "مطلوب",
+    optional: "اختياري",
+    preview: "معاينة",
   },
   en: {
     // Auth
@@ -229,15 +334,38 @@ const translations = {
     "back.to.login": "Back to login",
     "check.email": "Check your email",
     "check.email.description": "We've sent you a password reset link. Please check your email.",
-    "members.management":"member manaement",
+    "welcome.back": "Welcome back",
+    "enter.credentials": "Enter your credentials to access the dashboard",
+    "reset.password": "Reset Password",
+    "reset.password.description": "Enter a new password for your account",
+
     // Dashboard
     dashboard: "Dashboard",
     "news.management": "News Management",
     "events.management": "Events Management",
+    "members.management": "Members Management",
     "user.management": "User Management",
     profile: "Profile",
     logout: "Log out",
     "switch.language": "Switch Language",
+    "add.member": "Add Member",
+    "system.settings": "System Settings",
+    "dashboard.title": "Dashboard | Sports Management",
+    "dashboard.description": "Overview of the sports management dashboard",
+    "news.title": "News Management | Sports Management",
+    "news.description": "Manage news articles for the sports website",
+    "events.title": "Events Management | Sports Management",
+    "events.description": "Manage events for the sports website",
+    "users.title": "User Management | Sports Management",
+    "users.description": "Manage system users",
+    "settings.title": "Settings | Sports Management",
+    "settings.description": "System settings",
+    "create.event.title": "Create Event | Sports Management",
+    "create.event.description": "Create a new event",
+    "edit.event.title": "Edit Event | Sports Management",
+    "edit.event.description": "Edit an existing event",
+    "create.user.title": "Create User | Sports Management",
+    "create.user.description": "Create a new user",
 
     // Stats
     "total.news": "Total News",
@@ -248,6 +376,15 @@ const translations = {
     "scheduled.this.week": "scheduled this week",
     "from.last.quarter": "from last quarter",
     "since.last.login": "since last login",
+    members: "Members",
+    "member.profile": "Member Profile",
+    "member.profile.title": "Board Member",
+    "other.language": "Other Language",
+    "member.not.found": "Member not found",
+    "back.to.members": "Back to Members list",
+    "edit.member": "Edit Member",
+    "description": "Description",
+    "position": "Position",
 
     // Content
     "content.overview": "Content Overview",
@@ -255,32 +392,55 @@ const translations = {
     "recent.news.description": "Latest news articles published",
     "upcoming.events.title": "Upcoming Events",
     "upcoming.events.description": "Events scheduled for the next 30 days",
-"add.member":"add member",
-    // Members
-    members:"members",
 
     // News
     "add.news": "Add News",
     "create.news": "Create News Article",
     "edit.news": "Edit News Article",
-    "news.title": "Title",
+    "news.title.ar": "Title (Arabic)",
+    "news.title.en": "Title (English)",
+    "news.title.ar.placeholder": "Enter news title in Arabic",
+    "news.title.en.placeholder": "Enter news title in English",
+    "news.content.ar": "Content (Arabic)",
+    "news.content.en": "Content (English)",
+    "news.content.ar.placeholder": "Enter news content in Arabic",
+    "news.content.en.placeholder": "Enter news content in English",
     content: "Content",
     "publication.date": "Publication Date",
+    "select.date": "Select date",
     image: "Image",
+    "news.images": "News Images (Max 3 images)",
     "upload.image": "Upload Image",
+    "add.image": "Add Image",
+    "choose.image": "Choose Image",
     "change.image": "Change Image",
     "no.image.uploaded": "No image uploaded",
+    "image.required": "At least one image is required",
     "update.news": "Update News",
-    "create.news.button": "Create News",
-    cancel: "Cancel",
+    "update.news.success.title": "News Updated",
+    "update.news.success.description": "News article updated successfully.",
+    "create.news.success.title": "News Created",
+    "create.news.success.description": "News article created successfully.",
+    "news.save.error": "Error occurred while saving the news",
+    "news.category.placeholder": "Select news category",
+    "loading.categories": "Loading categories...",
+    "no.categories.available": "No categories available",
+    "create.news.button": "Create News Article",
     "news.category": "Category",
     "news.featured": "Featured",
     "news.language": "Language",
-    "news.preview": "Preview",
     "news.publish": "Publish",
     "news.unpublish": "Unpublish",
     "news.delete": "Delete",
     "news.view": "View",
+    "news.management.title": "News Management",
+    "news.delete.success": "News article deleted successfully.",
+    "news.delete.error": "Failed to delete news article. Please try again.",
+    "open.menu": "Open Menu",
+    "edit.news.title": "Edit News | Sports Management",
+    "edit.news.description": "Edit an existing news article",
+    "news.not.found": "News article not found",
+    "news.not.found.error": "News article not found. It may have been deleted or moved.",
 
     // Events
     "add.event": "Add Event",
@@ -304,6 +464,15 @@ const translations = {
     past: "Past",
     "update.event": "Update Event",
     "create.event.button": "Create Event",
+    "events.management.title": "Events Management",
+    "event.save.draft": "Save as Draft",
+    tournament: "Tournament",
+    championship: "Championship",
+    seminar: "Seminar",
+    training: "Training",
+    exhibition: "Exhibition",
+    conference: "Conference",
+    other: "Other",
 
     // Users
     users: "Users",
@@ -320,6 +489,17 @@ const translations = {
     inactive: "Inactive",
     "update.user": "Update User",
     "create.user.button": "Create User",
+    "user.management.title": "User Management",
+    "user.delete.success.title": "User Deleted",
+    "user.delete.success.description": "User has been deleted successfully.",
+    "user.delete.error": "Failed to delete user. Please try again.",
+    "user.fetch.error": "Failed to fetch user data. Please try again.",
+    "users.load.error": "Failed to load users. Please try again later.",
+    "user.not.found": "User not found",
+    "user.not.found.error": "User not found. It may have been deleted or moved.",
+    "phone.number": "Phone Number",
+    user: "User",
+    "profile.image": "Profile Image",
 
     // Table
     actions: "Actions",
@@ -339,6 +519,20 @@ const translations = {
     "new.password": "New Password",
     "confirm.password": "Confirm Password",
     "profile.picture": "Profile Picture",
+    "profile.not.found": "Profile not found",
+    "profile.data.error": "Error loading profile data",
+
+    // Settings
+    "general.settings": "General Settings",
+    language: "Language",
+    arabic: "Arabic",
+    english: "English",
+    notifications: "Notifications",
+    "notifications.description": "Manage your notification settings",
+    "email.notifications": "Email Notifications",
+    "email.notifications.description": "Receive notifications via email when new content is added or updated.",
+    "push.notifications": "Push Notifications",
+    "push.notifications.description": "Receive instant notifications when new content is added or updated.",
 
     // Months
     jan: "Jan",
@@ -354,17 +548,25 @@ const translations = {
     nov: "Nov",
     dec: "Dec",
 
+    // Footer
+    copyright: "© {year} Sports Management. All rights reserved.",
+    
+    // Platform
+    "platform.description": "An integrated platform for efficiently managing sports activities and events",
+    "platform.features": "Platform Features",
+    "platform.easy.management": "Easy Management",
+    "platform.easy.management.description": "User-friendly interface for managing all sports activities and events",
+    "platform.secure": "Secure and Reliable",
+    "platform.secure.description": "Complete protection for your data and information with advanced encryption",
+    "platform.analytics": "Advanced Analytics",
+    "platform.analytics.description": "Comprehensive insights and analytics to help you make better decisions",
+
     // Misc
     by: "By",
     on: "on",
     "pick.a.date": "Pick a date",
     "select.event.type": "Select event type",
     "enter.event.location": "Enter event location",
-    saving: "Saving...",
-    sending: "Sending...",
-    "logging.in": "Logging in...",
-    required: "Required",
-    optional: "Optional",
     "select.option": "Select an option",
     "search.placeholder": "Search...",
     "filter.by": "Filter by",
@@ -384,15 +586,11 @@ const translations = {
     warning: "Warning",
     info: "Info",
     confirm: "Confirm",
-    // cancel: "Cancel",
     close: "Close",
     save: "Save",
     add: "Add",
     remove: "Remove",
-    // edit: "Edit",
-    // delete: "Delete",
     view: "View",
-    preview: "Preview",
     download: "Download",
     upload: "Upload",
     copy: "Copy",
@@ -416,6 +614,15 @@ const translations = {
     collapse: "Collapse",
     details: "Details",
     summary: "Summary",
+
+    // UI Common
+    cancel: "Cancel",
+    saving: "Saving...",
+    sending: "Sending...",
+    "logging.in": "Logging in...",
+    required: "Required",
+    optional: "Optional",
+    preview: "Preview",
   },
 }
 
@@ -424,6 +631,7 @@ const LanguageContext = createContext<LanguageContextType>({
   setLanguage: () => {},
   t: (key: string) => key,
   dir: "rtl",
+  isLoaded: false
 })
 
 export function useLanguage() {
@@ -431,20 +639,38 @@ export function useLanguage() {
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [isLoaded, setIsLoaded] = useState(false)
   const [language, setLanguage] = useState<Language>("ar")
   const dir = language === "ar" ? "rtl" : "ltr"
 
+  // تنفيذ هذا الأثر عند تحميل المكون لأول مرة فقط
   useEffect(() => {
-    // Try to get language from localStorage
-    const savedLanguage = localStorage.getItem("uaemmaf-language") as Language | null
-    if (savedLanguage && (savedLanguage === "ar" || savedLanguage === "en")) {
-      setLanguage(savedLanguage)
+    try {
+      // قراءة تفضيل اللغة من التخزين المحلي
+      const savedLanguage = localStorage.getItem("uaemmaf-language") as Language | null
+      
+      if (savedLanguage && (savedLanguage === "ar" || savedLanguage === "en")) {
+        setLanguage(savedLanguage)
+      }
+      
+      // تحديث سمات HTML
+      const htmlElement = document.documentElement
+      htmlElement.lang = savedLanguage || language
+      htmlElement.dir = (savedLanguage === "en") ? "ltr" : "rtl"
+    } finally {
+      // تعيين الحالة إلى محمّل بغض النظر عن نجاح القراءة من التخزين
+      setIsLoaded(true)
     }
+  }, [])
+
+  // الاستجابة للتغييرات في اللغة
+  useEffect(() => {
+    if (!isLoaded) return
 
     const htmlElement = document.documentElement
     htmlElement.lang = language
     htmlElement.dir = language === "ar" ? "rtl" : "ltr"
-  }, [language])
+  }, [language, isLoaded])
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang)
@@ -452,11 +678,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }
 
   const t = (key: string) => {
-    return translations[language][key as keyof typeof translations.ar] || key
+    // Type-safe translation lookup
+    return (translations[language] as Record<string, string>)[key] || key;
   }
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t, dir }}>
+    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t, dir, isLoaded }}>
       {children}
     </LanguageContext.Provider>
   )

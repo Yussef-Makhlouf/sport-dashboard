@@ -6,6 +6,7 @@ import { Overview } from "@/components/overview"
 import { RecentNews } from "@/components/recent-news"
 import { UpcomingEvents } from "@/components/upcoming-events"
 import { API_URL } from "@/lib/constants"
+import { useLanguage } from "@/components/language-provider"
 
 interface DashboardData {
   message: string
@@ -17,6 +18,7 @@ interface DashboardData {
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -41,19 +43,19 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
-        <div>جاري التحميل...</div>
+        <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
+        <div>{t("loading")}</div>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الأخبار</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("total.news")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -70,12 +72,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardData?.news || 0}</div>
-            <p className="text-xs text-muted-foreground">+12% من الشهر الماضي</p>
+            <p className="text-xs text-muted-foreground">+12% {t("from.last.month")}</p>
           </CardContent>
         </Card>
         {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">الفعاليات القادمة</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("upcoming.events")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -94,12 +96,12 @@ export default function DashboardPage() {
           </CardHeader> 
            <CardContent>
             <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">+4 مجدولة هذا الأسبوع</p>
+            <p className="text-xs text-muted-foreground">+4 {t("scheduled.this.week")}</p>
           </CardContent>
         </Card> */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">الاعضاء</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("members")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -119,12 +121,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardData?.members || 0}</div>
-            <p className="text-xs text-muted-foreground">+7 من الربع الماضي</p>
+            <p className="text-xs text-muted-foreground">+7 {t("from.last.quarter")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">المستخدمين النشطين</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("active.users")}</CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -143,14 +145,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardData?.users || 0}</div>
-            <p className="text-xs text-muted-foreground">+2 منذ آخر تسجيل دخول</p>
+            <p className="text-xs text-muted-foreground">+2 {t("since.last.login")}</p>
           </CardContent>
         </Card>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>نظرة عامة على المحتوى</CardTitle>
+            <CardTitle>{t("content.overview")}</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             <Overview />
@@ -158,8 +160,8 @@ export default function DashboardPage() {
         </Card>
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>أحدث الأخبار</CardTitle>
-            <CardDescription>آخر المقالات الإخبارية المنشورة</CardDescription>
+            <CardTitle>{t("recent.news")}</CardTitle>
+            <CardDescription>{t("recent.news.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <RecentNews />
@@ -169,8 +171,8 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-1">
         <Card>
           <CardHeader>
-            <CardTitle>الفعاليات القادمة</CardTitle>
-            <CardDescription>الفعاليات المجدولة للثلاثين يومًا القادمة</CardDescription>
+            <CardTitle>{t("upcoming.events.title")}</CardTitle>
+            <CardDescription>{t("upcoming.events.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <UpcomingEvents />

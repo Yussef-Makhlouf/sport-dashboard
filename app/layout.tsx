@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from "@/components/language-provider"
+import { LanguageGuard } from "@/components/language-guard"
 
 const cairo = Cairo({
   subsets: ["arabic"],
@@ -24,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head >
 
         <link rel="icon" href="/favicon.png" sizes="any" />
@@ -33,7 +34,9 @@ export default function RootLayout({
       <body className={cairo.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <LanguageProvider>
-            {children}
+            <LanguageGuard>
+              {children}
+            </LanguageGuard>
             <Toaster />
           </LanguageProvider>
         </ThemeProvider>

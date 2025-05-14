@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { API_URL } from "@/lib/constants";
 import Cookies from 'js-cookie'
 import Link from "next/link"
+import { useLanguage } from "@/components/language-provider"
 
 import * as z from "zod"
 
@@ -26,7 +27,18 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [redirectPath, setRedirectPath] = useState("/dashboard")
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useLanguage()
+  
+  // Get the redirect path from URL query parameter
+  useEffect(() => {
+    const redirect = searchParams.get("redirect")
+    if (redirect) {
+      setRedirectPath(redirect)
+    }
+  }, [searchParams])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,7 +92,8 @@ export function LoginForm() {
           Cookies.set('userData', JSON.stringify(userData), { expires: 7, secure: true });
         }
         
-        router.push("/dashboard")
+        // Redirect to the original path the user was trying to access
+        router.push(redirectPath)
       } else {
         // Failed login
         toast({
@@ -102,8 +115,6 @@ export function LoginForm() {
     }
   }
   
-  
-  
   return (
     <div className="grid gap-6">
       <Form {...form}>
@@ -113,7 +124,7 @@ export function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>البريد الإلكتروني</FormLabel>
+                <FormLabel>{t("email")}</FormLabel>
                 <FormControl>
                   <Input placeholder="name@example.com" {...field} />
                 </FormControl>
@@ -126,7 +137,7 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>كلمة المرور</FormLabel>
+                <FormLabel>{t("password")}</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="••••••••" {...field} />
                 </FormControl>
@@ -135,14 +146,14 @@ export function LoginForm() {
             )}
           />
           <Button type="submit" className="w-full bg-[#BB2121] hover:bg-[#C20000]" disabled={isLoading}>
-            {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+            {isLoading ? t("logging.in") : t("login")}
           </Button>
           <div className="text-center mt-4">
-            <Link 
-              href="/forgot-password" 
+            <Link
+              href="/forgot-password"
               className="text-sm text-[#BB2121] hover:text-[#D82F2F] hover:underline"
             >
-              نسيت كلمة المرور؟
+              {t("forgot.password")}
             </Link>
           </div>
         </form>

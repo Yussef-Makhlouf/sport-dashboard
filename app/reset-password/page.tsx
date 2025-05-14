@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { ResetPasswordForm } from "@/components/reset-password-form"
+import { useLanguage } from "@/components/language-provider"
+import { Button } from "@/components/ui/button"
+import { Globe } from "lucide-react"
 
 export default function ResetPasswordPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
+  const { t, language, setLanguage } = useLanguage();
 
   // Handle mouse movement for 3D effect
   useEffect(() => {
@@ -23,10 +27,27 @@ export default function ResetPasswordPage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  const toggleLanguage = () => {
+    setLanguage(language === "ar" ? "en" : "ar");
+  };
+
   if (!mounted) return null;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center">
+      {/* Language switch button */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button 
+          onClick={toggleLanguage} 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+        >
+          <Globe className="h-4 w-4" />
+          <span>{language === "ar" ? "English" : "العربية"}</span>
+        </Button>
+      </div>
+
       {/* Dynamic background */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 transition-all duration-500 ease-in-out">
         {/* Animated background elements */}
@@ -63,13 +84,13 @@ export default function ResetPasswordPage() {
           </div>
           
           <h1 className="mt-8 text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#BB2121] to-[#FF6B6B] animate-gradient">
-            إدارة الرياضة
+            {t("dashboard")}
           </h1>
           
           <div className="h-1 w-32 bg-gradient-to-r from-[#BB2121]/50 via-[#FF6B6B] to-[#BB2121]/50 rounded-full my-6 animate-shimmer"></div>
           
           <p className="text-xl text-center max-w-xl text-gray-600 dark:text-gray-300 mb-10">
-            منصة متكاملة لإدارة الأنشطة الرياضية والفعاليات بكفاءة عالية
+            {t("platform.description")}
           </p>
         </div>
 
@@ -85,10 +106,10 @@ export default function ResetPasswordPage() {
             <div className="relative z-10">
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  إعادة تعيين كلمة المرور
+                  {t("reset.password")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                  أدخل الرمز المرسل إلى بريدك الإلكتروني وكلمة المرور الجديدة
+                  {t("reset.password.description")}
                 </p>
               </div>
               
@@ -103,7 +124,7 @@ export default function ResetPasswordPage() {
 
       {/* Footer */}
       <div className="absolute bottom-4 text-center w-full text-sm text-gray-500 dark:text-gray-400 z-10">
-        © {new Date().getFullYear()} إدارة الرياضة. جميع الحقوق محفوظة.
+        {t("copyright").replace("{year}", new Date().getFullYear().toString())}
       </div>
     </div>
   )

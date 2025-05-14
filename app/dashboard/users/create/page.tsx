@@ -1,15 +1,14 @@
-import type { Metadata } from "next"
-import { UserForm } from "@/components/user-form"
+"use client"
 
-export const metadata: Metadata = {
-  title: "إنشاء مستخدم | إدارة الرياضة",
-  description: "إنشاء مستخدم جديد",
-}
+import { UserForm } from "@/components/user-form"
+import { useLanguage } from "@/components/language-provider"
 
 export default function CreateUserPage() {
+  const { t } = useLanguage()
+  
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold tracking-tight">إنشاء مستخدم جديد</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{t("create.user")}</h1>
       <UserForm />
     </div>
   )

@@ -56,6 +56,7 @@ export function NewsTable() {
   const [tableData, setTableData] = useState<NewsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { t, language } = useLanguage()
 
   // Fetch data on the client side only
   useEffect(() => {
@@ -73,7 +74,7 @@ export function NewsTable() {
         setError(null)
       } catch (err) {
         console.error("Error fetching news:", err)
-        setError("Failed to load news. Please try again later.")
+        setError(t("error"))
         setTableData([])
       } finally {
         setIsLoading(false)
@@ -81,7 +82,7 @@ export function NewsTable() {
     }
 
     fetchNews()
-  }, [])
+  }, [t])
 
   const handleDelete = async (id: string) => {
     try {
@@ -98,14 +99,14 @@ export function NewsTable() {
       setTableData(tableData.filter((item) => item._id !== id))
       
       toast({
-        title: "تم حذف المقال الإخباري",
-        description: "تم حذف المقال الإخباري بنجاح.",
+        title: t("success"),
+        description: t("news.delete.success"),
       })
     } catch (err) {
       console.error("Error deleting news:", err)
       toast({
-        title: "خطأ",
-        description: "فشل حذف المقال الإخباري. يرجى المحاولة مرة أخرى.",
+        title: t("error"),
+        description: t("news.delete.error"),
         variant: "destructive",
       })
     }
@@ -125,7 +126,7 @@ export function NewsTable() {
   const columns: ColumnDef<NewsItem>[] = [
     {
       accessorKey: "image",
-      header: "الصورة",
+      header: t("image"),
       cell: ({ row }) => {
         const news = row.original
         // Add null check for image array
@@ -137,7 +138,7 @@ export function NewsTable() {
           <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
             <img
               src={news.image[0].secure_url}
-              alt={news.title?.ar || "News image"}
+              alt={news.title?.[language] || "News image"}
               className="w-full h-full object-cover"
             />
           </div>
@@ -146,31 +147,31 @@ export function NewsTable() {
     },
     {
       accessorKey: "title",
-      header: "العنوان",
+      header: t("news.title.ar"),
       cell: ({ row }) => {
         const news = row.original
         // Add null check for title
-        const title = news.title?.ar || ""
+        const title = news.title?.[language] || ""
         return <div className="font-medium">{title}</div>
       },
     },
     {
       accessorKey: "category",
-      header: "الفئة",
+      header: t("news.category"),
       cell: ({ row }) => {
         const news = row.original
         // Add null check for category
-        const category = news.category?.name?.ar || ""
+        const category = news.category?.name?.[language] || ""
         return <div className="font-medium">{category}</div>
       },
     },
     {
       accessorKey: "content",
-      header: "المحتوى",
+      header: t("content"),
       cell: ({ row }) => {
         const news = row.original
         // Add null check for content
-        const content = news.content?.ar || ""
+        const content = news.content?.[language] || ""
         
         // Now content is guaranteed to be a string
         const truncatedContent = content.length > 50 
@@ -182,7 +183,7 @@ export function NewsTable() {
     },
     {
       accessorKey: "date",
-      header: "تاريخ النشر",
+      header: t("publication.date"),
       cell: ({ row }) => {
         const news = row.original
         // Add null check for date
@@ -191,13 +192,14 @@ export function NewsTable() {
     },
     {
       id: "actions",
+      header: t("actions"),
       cell: ({ row }) => {
         const news = row.original
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">فتح القائمة</span>
+                <span className="sr-only">{t("open.menu")}</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -205,18 +207,18 @@ export function NewsTable() {
               {/* <DropdownMenuItem asChild>
                 <Link href={`/dashboard/news/${news._id}`}>
                   <Eye className="ml-2 h-4 w-4" />
-                  عرض
+                  {t("news.view")}
                 </Link>
               </DropdownMenuItem> */}
               <DropdownMenuItem asChild>
                 <Link href={`/dashboard/news/${news._id}/edit`}>
                   <Edit className="ml-2 h-4 w-4" />
-                  تعديل
+                  {t("edit")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleDelete(news._id)}>
                 <Trash className="ml-2 h-4 w-4" />
-                حذف
+                {t("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -241,7 +243,7 @@ export function NewsTable() {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
-        <p className="mr-2">جاري التحميل...</p>
+        <p className="mr-2">{t("loading")}</p>
       </div>
     )
   }
@@ -281,7 +283,7 @@ export function NewsTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  لم يتم العثور على مقالات إخبارية.
+                  {t("no.news.found")}
                 </TableCell>
               </TableRow>
             )}
@@ -290,10 +292,10 @@ export function NewsTable() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          السابق
+          {t("previous")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          التالي
+          {t("next")}
         </Button>
       </div>
     </div>

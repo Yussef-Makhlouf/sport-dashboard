@@ -4,10 +4,11 @@ import { DashboardNav } from "@/components/dashboard-nav"
 import { UserNav } from "@/components/user-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ProtectedRoute } from "@/components/protected-route"
 
 export const metadata: Metadata = {
-  title: "لوحة التحكم | إدارة الرياضة",
-  description: "نظرة عامة على لوحة تحكم إدارة الرياضة",
+  title: "dashboard.title",
+  description: "dashboard.description",
 }
 
 export default function DashboardLayout({
@@ -16,26 +17,28 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-[#111111] text-white">
-        <div className="container flex h-16 items-center px-4 sm:px-6">
-          <div className="flex items-center gap-2 text-lg font-medium">
-            {/* <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" /> */}
-           
+    <ProtectedRoute>
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-40 border-b bg-[#111111] text-white">
+          <div className="container flex h-16 items-center px-4 sm:px-6">
+            <div className="flex items-center gap-2 text-lg font-medium">
+              {/* <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" /> */}
+             
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <LanguageSwitcher />
+              <UserNav />
+              <MobileNav />
+            </div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <LanguageSwitcher />
-            <UserNav />
-            <MobileNav />
-          </div>
+        </header>
+        <div className="flex flex-1">
+          <aside className="hidden w-64 border-r bg-[#111111] text-white md:block">
+            <DashboardNav />
+          </aside>
+          <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
         </div>
-      </header>
-      <div className="flex flex-1">
-        <aside className="hidden w-64 border-r bg-[#111111] text-white md:block">
-          <DashboardNav />
-        </aside>
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 }

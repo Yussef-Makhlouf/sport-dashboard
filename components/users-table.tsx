@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { API_URL } from "@/lib/constants"
+import { useLanguage } from "@/components/language-provider"
 
 interface User {
   _id: string
@@ -43,6 +44,7 @@ export function UsersTable() {
   const [tableData, setTableData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -76,7 +78,7 @@ export function UsersTable() {
         setError(null)
       } catch (err) {
         console.error("Error fetching users:", err)
-        setError("Failed to load users. Please try again later.")
+        setError(t("users.load.error"))
         // Use sample data as fallback
         setTableData([])
       } finally {
@@ -85,7 +87,7 @@ export function UsersTable() {
     }
 
     fetchUsers()
-  }, [])
+  }, [t])
 
   const handleDelete = async (id: string) => {
     try {
@@ -100,14 +102,14 @@ export function UsersTable() {
       // Only update the UI if the API call was successful
       setTableData(tableData.filter((item) => item.id !== id));
       toast({
-        title: "تم حذف المستخدم",
-        description: "تم حذف المستخدم بنجاح.",
+        title: t("user.delete.success.title"),
+        description: t("user.delete.success.description"),
       });
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء حذف المستخدم. يرجى المحاولة مرة أخرى.",
+        title: t("error"),
+        description: t("user.delete.error"),
         variant: "destructive",
       });
     }
@@ -127,8 +129,8 @@ export function UsersTable() {
     } catch (error) {
       console.error('Error fetching user:', error);
       toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء جلب بيانات المستخدم. يرجى المحاولة مرة أخرى.",
+        title: t("error"),
+        description: t("user.fetch.error"),
         variant: "destructive",
       });
       return null;
@@ -147,7 +149,7 @@ export function UsersTable() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "avatar",
-      header: "المستخدم",
+      header: t("user"),
       cell: ({ row }) => {
         const user = row.original
         console.log(user);
@@ -168,31 +170,31 @@ export function UsersTable() {
     },
     {
       accessorKey: "phoneNumber",
-      header: "رقم الهاتف",
+      header: t("phone.number"),
       cell: ({ row }) => {
         return <div>{row.original.phoneNumber}</div>
       },
     },
     {
       accessorKey: "role",
-      header: "الدور",
+      header: t("role"),
       cell: ({ row }) => {
         const role = row.getValue("role") as string
         return (
           <Badge variant={role === "admin" ? "default" : role === "editor" ? "outline" : "secondary"}>
-            {role === "admin" ? "مدير" : role === "editor" ? "محرر" : "مشاهد"}
+            {role === "admin" ? t("admin") : role === "editor" ? t("editor") : t("viewer")}
           </Badge>
         )
       },
     },
     {
       accessorKey: "isActive",
-      header: "الحالة",
+      header: t("status"),
       cell: ({ row }) => {
         const isActive = row.original.isActive
         return (
           <Badge variant={isActive ? "default" : "outline"} className={isActive ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}>
-            {isActive ? "نشط" : "غير نشط"}
+            {isActive ? t("active") : t("inactive")}
           </Badge>
         )
       },
@@ -205,20 +207,20 @@ export function UsersTable() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">فتح القائمة</span>
+                <span className="sr-only">{t("open.menu")}</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => handleEdit(user.id)}>
                 <Edit className="ml-2 h-4 w-4" />
-                تعديل
+                {t("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleDelete(user.id)}>
                 <Trash className="ml-2 h-4 w-4" />
-                حذف
+                {t("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -238,7 +240,7 @@ export function UsersTable() {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
-        <p className="mr-2">جاري التحميل...</p>
+        <p className="mr-2">{t("loading")}</p>
       </div>
     )
   }
@@ -278,7 +280,7 @@ export function UsersTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  لم يتم العثور على مستخدمين.
+                  {t("no.users.found")}
                 </TableCell>
               </TableRow>
             )}
@@ -287,10 +289,10 @@ export function UsersTable() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          السابق
+          {t("previous")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          التالي
+          {t("next")}
         </Button>
       </div>
     </div>
