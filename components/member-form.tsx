@@ -31,6 +31,7 @@ interface MemberFormProps {
       secure_url: string
       public_id: string
     }
+    order?: number
   }
 }
 
@@ -51,6 +52,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
     positionEn: initialData?.position?.en || "",
     descriptionAr: initialData?.description?.ar || "",
     descriptionEn: initialData?.description?.en || "",
+    order: initialData?.order || 0,
   })
 
   const handleChange = (
@@ -91,6 +93,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
       formDataToSend.append("position[en]", formData.positionEn)
       formDataToSend.append("description[ar]", formData.descriptionAr)
       formDataToSend.append("description[en]", formData.descriptionEn)
+      formDataToSend.append("order", formData.order.toString())
 
       // Add image if available
       if (imageFile) {
@@ -137,6 +140,18 @@ export function MemberForm({ initialData }: MemberFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
+          <div>
+            <Label htmlFor="order">{t("Order")}</Label>
+            <Input
+              id="order"
+              name="order"
+              type="number"
+              value={formData.order}
+              onChange={handleChange}
+              required
+              min="0"
+            />
+          </div>
           <div>
             <Label htmlFor="nameAr">{t("Name (Arabic)")}</Label>
             <Input
