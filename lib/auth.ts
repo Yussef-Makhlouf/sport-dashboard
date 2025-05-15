@@ -87,7 +87,7 @@ export const useAuth = () => {
         try {
           const response = await fetch(`${API_URL}/auth/verify`, {
             headers: {
-              'Authorization': `Bearer ${token}`
+              Authorization: `MMA ${token}`
             }
           });
           
@@ -158,13 +158,13 @@ export function withAuth<P extends object>(Component: React.ComponentType<P>) {
     }, [isLoggedIn, isLoading, router]);
     
     if (isLoading) {
-      return <div>Loading...</div>;
+      return `<div>Loading...</div>`;
     }
     
     if (!isLoggedIn) {
       return null; // Will redirect in the useEffect
     }
     
-    return <Component {...props} />;
+    return `<Component {...props} />`;
   };
 } 

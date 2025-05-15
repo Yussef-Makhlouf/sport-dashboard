@@ -5,6 +5,7 @@ import { UserNav } from "@/components/user-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ProtectedRoute } from "@/components/protected-route"
+import { AuthWrapper } from "@/components/auth-wrapper"
 
 export const metadata: Metadata = {
   title: "dashboard.title",
@@ -22,8 +23,7 @@ export default function DashboardLayout({
         <header className="sticky top-0 z-40 border-b bg-[#111111] text-white">
           <div className="container flex h-16 items-center px-4 sm:px-6">
             <div className="flex items-center gap-2 text-lg font-medium">
-              {/* <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" /> */}
-             
+              <img src="/logo3.png" alt="UAEMMAF" className="h-10 w-auto" />
             </div>
             <div className="ml-auto flex items-center gap-2">
               <LanguageSwitcher />

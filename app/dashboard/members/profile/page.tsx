@@ -89,7 +89,7 @@ export default function MemberProfilePage() {
             cache: 'no-store',
             headers: {
               'Content-Type': 'application/json',
-              ...(token && { 'Authorization': `Bearer ${token}` })
+              ...(token && { Authorization: `MMA ${token}` })
             }
           })
           
@@ -105,7 +105,7 @@ export default function MemberProfilePage() {
               cache: 'no-store',
               headers: {
                 'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
+                ...(token && { Authorization: `MMA ${token}` })
               }
             })
             

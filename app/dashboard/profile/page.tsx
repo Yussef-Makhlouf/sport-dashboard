@@ -72,7 +72,7 @@ export default function ProfilePage() {
             console.log('No user ID found, trying to get user info from token')
             const response = await fetch(`${API_URL}/auth/verify`, {
               headers: {
-                'Authorization': `Bearer ${token}`
+                Authorization: `MMA ${token}`
               }
             })
             
@@ -108,7 +108,7 @@ export default function ProfilePage() {
             cache: 'no-store',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': token ? `Bearer ${token}` : ''
+              Authorization: token ? `MMA ${token}` : ''
             }
           })
           
@@ -124,7 +124,7 @@ export default function ProfilePage() {
               cache: 'no-store',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
+                Authorization: token ? `MMA ${token}` : ''
               }
             })
             console.log('Alternative API response status:', response.status)

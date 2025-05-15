@@ -79,6 +79,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t } = useLanguage()
+  const [isDeletingImage, setIsDeletingImage] = useState(false)
 
   // Initialize preview URLs from initialData if available
   useEffect(() => {
@@ -181,14 +182,47 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     }
   }
 
-  const removeImage = (index: number) => {
+  const deleteExistingImage = async (imageId: string) => {
+    if (!initialData?._id) return
+    
+    try {
+      setIsDeletingImage(true)
+      const response = await fetch(`${API_URL}/news/deleteNewsImage/${initialData._id}/${imageId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete image')
+      }
+
+      toast({
+        title: t("success"),
+        description: t("image.deleted.success"),
+        duration: 3000,
+      })
+    } catch (error) {
+      console.error("Error deleting image:", error)
+      toast({
+        title: t("error"),
+        description: t("image.deleted.error"),
+        variant: "destructive",
+        duration: 3000,
+      })
+    } finally {
+      setIsDeletingImage(false)
+    }
+  }
+
+  const removeImage = async (index: number) => {
     // If the image is from initialData (existing image)
-    if (index < previewUrls.length - selectedImages.length) {
+    if (initialData?.image && index < initialData.image.length) {
+      const imageToDelete = initialData.image[index]
+      await deleteExistingImage(imageToDelete.public_id)
       setPreviewUrls(prev => prev.filter((_, i) => i !== index))
     } 
     // If the image is newly added
     else {
-      const newSelectedImagesIndex = index - (previewUrls.length - selectedImages.length)
+      const newSelectedImagesIndex = index - (initialData?.image?.length || 0)
       setSelectedImages(prev => prev.filter((_, i) => i !== newSelectedImagesIndex))
       setPreviewUrls(prev => prev.filter((_, i) => i !== index))
     }
@@ -475,6 +509,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                         size="icon"
                         className="absolute top-2 right-2 w-8 h-8 rounded-full opacity-80 hover:opacity-100"
                         onClick={() => removeImage(index)}
+                        disabled={isDeletingImage}
                       >
                         <X className="h-4 w-4" />
                       </Button>

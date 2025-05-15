@@ -24,6 +24,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import Cookies from 'js-cookie'
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 // Define the type for member items from your API
 interface MemberItem {
@@ -53,7 +54,9 @@ export function MembersTable() {
   const [tableData, setTableData] = useState<MemberItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { language, t } = useLanguage()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+  const { t, language } = useLanguage()
 
   // Fetch data on the client side only
   useEffect(() => {
@@ -138,20 +141,23 @@ export function MembersTable() {
   }, [])
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("Are you sure you want to delete this member?"))) {
-      return
-    }
-    
+    setItemToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return
+
     try {
-      console.log(`Attempting to delete member with ID: ${id}`)
+      console.log(`Attempting to delete member with ID: ${itemToDelete}`)
       
       // Try the primary endpoint first
       let response
       let deleteSuccessful = false
       
       try {
-        console.log(`Using primary endpoint: ${API_URL}/members/${id}`)
-        response = await fetch(`${API_URL}/members/${id}`, {
+        console.log(`Using primary endpoint: ${API_URL}/members/${itemToDelete}`)
+        response = await fetch(`${API_URL}/members/${itemToDelete}`, {
           method: 'DELETE',
         });
         
@@ -170,7 +176,7 @@ export function MembersTable() {
       // Try alternative endpoint if first one failed
       if (!deleteSuccessful) {
         try {
-          const alternativeEndpoint = `${API_URL}/members/delete/${id}`
+          const alternativeEndpoint = `${API_URL}/members/delete/${itemToDelete}`
           console.log(`Using alternative endpoint: ${alternativeEndpoint}`)
           
           response = await fetch(alternativeEndpoint, {
@@ -192,7 +198,7 @@ export function MembersTable() {
       }
       
       // Update the UI after successful deletion
-      setTableData(tableData.filter((item) => item._id !== id))
+      setTableData(tableData.filter((item) => item._id !== itemToDelete))
       
       toast({
         title: t("member.deleted"),
@@ -205,6 +211,9 @@ export function MembersTable() {
         description: t("Failed to delete member. Please try again."),
         variant: "destructive",
       })
+    } finally {
+      setDeleteDialogOpen(false)
+      setItemToDelete(null)
     }
   }
 
@@ -266,7 +275,7 @@ export function MembersTable() {
           <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
             <img
               src={member.image.secure_url}
-              alt={member.name?.ar || "Member image"}
+              alt={member.name?.[language] || "Member image"}
               className="w-full h-full object-cover"
             />
           </div>
@@ -279,7 +288,7 @@ export function MembersTable() {
       cell: ({ row }) => {
         const member = row.original
         // Add null check for name
-        const name = member.name?.ar
+        const name = member.name?.[language]
         return <div className="font-medium">{name}</div>
       },
     },
@@ -289,7 +298,7 @@ export function MembersTable() {
       cell: ({ row }) => {
         const member = row.original
         // Add null check for position
-        const position = member.position?.ar
+        const position = member.position?.[language]
         return <div>{position}</div>
       },
     },
@@ -309,10 +318,10 @@ export function MembersTable() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleViewProfile(member)}>
+              {/* <DropdownMenuItem onClick={() => handleViewProfile(member)}>
                 <Eye className="ml-2 h-4 w-4" />
                 {t("View Profile")}
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem asChild>
                 <Link href={`/dashboard/members/edit/${member._id}`}>
                   <Edit className="ml-2 h-4 w-4" />
@@ -360,54 +369,66 @@ export function MembersTable() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">{t("members.management")}</h2>
-        <Link href="/dashboard/members/create">
-          <Button>{t("add.member")}</Button>
-        </Link>
-      </div>
-      
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+    <>
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">{t("members.management")}</h2>
+          <Link href="/dashboard/members/create">
+            <Button>{t("add.member")}</Button>
+          </Link>
+        </div>
+        
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {t("No members found.")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    {t("No members found.")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            {t("Previous")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            {t("Next")}
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          {t("Previous")}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          {t("Next")}
-        </Button>
-      </div>
-    </div>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false)
+          setItemToDelete(null)
+        }}
+        onConfirm={confirmDelete}
+        title={t("confirm.delete.member.title")}
+        description={t("confirm.delete.member.description")}
+      />
+    </>
   )
 }

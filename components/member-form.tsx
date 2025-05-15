@@ -23,10 +23,10 @@ interface MemberFormProps {
       ar: string
       en: string
     }
-    description?: {
-      ar: string
-      en: string
-    }
+    // description?: {
+    //   ar: string
+    //   en: string
+    // }
     image?: {
       secure_url: string
       public_id: string
@@ -50,8 +50,8 @@ export function MemberForm({ initialData }: MemberFormProps) {
     nameEn: initialData?.name?.en || "",
     positionAr: initialData?.position?.ar || "",
     positionEn: initialData?.position?.en || "",
-    descriptionAr: initialData?.description?.ar || "",
-    descriptionEn: initialData?.description?.en || "",
+    // descriptionAr: initialData?.description?.ar || "",
+    // descriptionEn: initialData?.description?.en || "",
     order: initialData?.order || 0,
   })
 
@@ -91,8 +91,8 @@ export function MemberForm({ initialData }: MemberFormProps) {
       formDataToSend.append("name[en]", formData.nameEn)
       formDataToSend.append("position[ar]", formData.positionAr)
       formDataToSend.append("position[en]", formData.positionEn)
-      formDataToSend.append("description[ar]", formData.descriptionAr)
-      formDataToSend.append("description[en]", formData.descriptionEn)
+      // formDataToSend.append("description[ar]", formData.descriptionAr)
+      // formDataToSend.append("description[en]", formData.descriptionEn)
       formDataToSend.append("order", formData.order.toString())
 
       // Add image if available
@@ -176,7 +176,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
             />
           </div>
           
-          <div>
+          {/* <div>
             <Label htmlFor="descriptionAr">{t("Description (Arabic)")}</Label>
             <Textarea
               id="descriptionAr"
@@ -186,7 +186,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
               rows={4}
               dir="rtl"
             />
-          </div>
+          </div> */}
         </div>
         
         <div className="space-y-4">
@@ -212,7 +212,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
             />
           </div>
           
-          <div>
+          {/* <div>
             <Label htmlFor="descriptionEn">{t("Description (English)")}</Label>
             <Textarea
               id="descriptionEn"
@@ -221,7 +221,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
               onChange={handleChange}
               rows={4}
             />
-          </div>
+          </div> */}
         </div>
       </div>
 
