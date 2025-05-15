@@ -26,11 +26,13 @@ export const useUser = () => {
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       
       if (!userData?._id) {
+        console.log('No user ID found in cookies');
         setUser(null);
         setIsLoading(false);
         return;
       }
 
+      console.log('Fetching user data for ID:', userData._id);
       const response = await fetch(`${API_URL}/auth/getUser/${userData._id}`, {
         headers: {
           Authorization: `MMA ${getAuthToken()}`,
@@ -38,10 +40,20 @@ export const useUser = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.message || 'Failed to fetch user data');
       }
 
       const data = await response.json();
+      console.log('User data response:', data);
+      
+      // Check if the response has the expected structure
+      if (!data.user) {
+        console.error('Unexpected API response structure:', data);
+        throw new Error('Invalid API response structure');
+      }
+
       setUser(data.user);
     } catch (error) {
       console.error('Error fetching user data:', error);

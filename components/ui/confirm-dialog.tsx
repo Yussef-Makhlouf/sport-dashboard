@@ -42,7 +42,7 @@ export function ConfirmDialog({
             {description || t("confirm.delete.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="gap-4">
           <AlertDialogCancel>{cancelText || t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}

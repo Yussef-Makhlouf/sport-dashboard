@@ -23,12 +23,31 @@ interface MemberData {
   customId: string;
 }
 
+type FormField = 'name' | 'position' | 'image' | 'order';
+type Language = 'ar' | 'en';
+
+interface FormData {
+  name: {
+    ar: string;
+    en: string;
+  };
+  position: {
+    ar: string;
+    en: string;
+  };
+  image: {
+    secure_url: string;
+    public_id: string;
+  };
+  order: number;
+}
+
 export default function EditMemberPage() {
   const params = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [memberData, setMemberData] = useState<MemberData | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: {
       ar: '',
       en: '',
@@ -80,11 +99,19 @@ export default function EditMemberPage() {
     }
   };
 
-  const handleInputChange = (field: string, lang: 'ar' | 'en', value: string) => {
+  const handleInputChange = (field: FormField, lang: Language, value: string) => {
+    if (field === 'order') {
+      setFormData(prev => ({
+        ...prev,
+        order: parseInt(value) || 0
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: {
-        ...prev[field as keyof typeof prev],
+        ...prev[field as 'name' | 'position' | 'image'],
         [lang]: value
       }
     }));
@@ -190,7 +217,7 @@ export default function EditMemberPage() {
             <input
               type="number"
               value={formData.order}
-              onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
+              onChange={(e) => handleInputChange('order', 'ar', e.target.value)}
               className="w-full p-2 border rounded-md"
               required
               min="0"
