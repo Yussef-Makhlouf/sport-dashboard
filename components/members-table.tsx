@@ -45,6 +45,7 @@ interface MemberItem {
     secure_url: string
     public_id: string
   }
+  order?: number
   createdAt?: string
 }
 
@@ -120,6 +121,9 @@ export function MembersTable() {
             throw new Error('Could not find members array in API response')
           }
         }
+        
+        // Sort members by order
+        members.sort((a, b) => (a.order || 0) - (b.order || 0))
         
         console.log(`Found ${members.length} members in response`)
         setTableData(members)

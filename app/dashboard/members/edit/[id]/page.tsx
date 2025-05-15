@@ -18,6 +18,7 @@ interface MemberData {
     ar: string;
     en: string;
   };
+  order?: number;
   _id: string;
   customId: string;
 }
@@ -40,6 +41,7 @@ export default function EditMemberPage() {
       secure_url: '',
       public_id: '',
     },
+    order: 0,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -56,6 +58,7 @@ export default function EditMemberPage() {
             name: data.member.name,
             position: data.member.position,
             image: data.member.image,
+            order: data.member.order || 0,
           });
           setPreviewUrl(data.member.image.secure_url);
         }
@@ -99,6 +102,7 @@ export default function EditMemberPage() {
       formDataToSend.append("name[en]", formData.name.en);
       formDataToSend.append("position[ar]", formData.position.ar);
       formDataToSend.append("position[en]", formData.position.en);
+      formDataToSend.append("order", formData.order.toString());
 
       // Add image if available
       if (selectedFile) {
@@ -178,6 +182,18 @@ export default function EditMemberPage() {
               onChange={(e) => handleInputChange('position', 'en', e.target.value)}
               className="w-full p-2 border rounded-md"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Order</label>
+            <input
+              type="number"
+              value={formData.order}
+              onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
+              className="w-full p-2 border rounded-md"
+              required
+              min="0"
             />
           </div>
 
