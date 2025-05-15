@@ -18,31 +18,27 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div>
-      <ProtectedRoute>
-        <AuthWrapper>
-          <div className="flex min-h-screen flex-col">
-            <header className="sticky top-0 z-40 border-b bg-[#111111] text-white">
-              <div className="container flex h-16 items-center px-4 sm:px-6">
-                <div className="flex items-center gap-2 text-lg font-medium">
-                  {/* <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" /> */}
-                </div>
-                <div className="ml-auto flex items-center gap-2">
-                  <LanguageSwitcher />
-                  <UserNav />
-                  <MobileNav />
-                </div>
-              </div>
-            </header>
-            <div className="flex flex-1">
-              <aside className="hidden w-64 border-r bg-[#111111] text-white md:block">
-                <DashboardNav />
-              </aside>
-              <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+    <ProtectedRoute>
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-40 border-b bg-[#111111] text-white">
+          <div className="container flex h-16 items-center px-4 sm:px-6">
+            <div className="flex items-center gap-2 text-lg font-medium">
+              <img src="/logo3.png" alt="UAEMMAF" className="h-10 w-auto" />
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <LanguageSwitcher />
+              <UserNav />
+              <MobileNav />
             </div>
           </div>
-        </AuthWrapper>
-      </ProtectedRoute>
-    </div>
-  );
+        </header>
+        <div className="flex flex-1">
+          <aside className="hidden w-64 border-r bg-[#111111] text-white md:block">
+            <DashboardNav />
+          </aside>
+          <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        </div>
+      </div>
+    </ProtectedRoute>
+  )
 }

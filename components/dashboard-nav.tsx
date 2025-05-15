@@ -45,15 +45,8 @@ export function DashboardNav() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center border-b border-[#222222] px-4">
-        <div className="flex items-center gap-2">
-          <img src="/logo3.png" alt="UAEMMAF" className="h-auto w-auto" />
-          
-        </div>
-      </div>
-      <nav className="flex-1 overflow-auto py-6">
-        <div className="px-3 py-2">
-          <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-[#8A8A8A]">{t("dashboard")}</h2>
+      <nav className="flex-1 overflow-auto py-4">
+        <div className="px-3">
           <div className="space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -63,11 +56,13 @@ export function DashboardNav() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-4 py-2.5 text-sm font-medium transition-all hover:text-white",
-                    isActive ? "bg-[#BB2121] text-white" : "text-[#8A8A8A] hover:bg-[#222222]",
+                    "flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium transition-all hover:text-white",
+                    isActive 
+                      ? "bg-[#BB2121] text-white shadow-lg shadow-[#BB2121]/20" 
+                      : "text-[#8A8A8A] hover:bg-[#222222] hover:text-white",
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "text-[#8A8A8A]")} />
                   <span>{item.title}</span>
                 </Link>
               )
