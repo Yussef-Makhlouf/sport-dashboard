@@ -25,6 +25,9 @@ import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { API_URL } from "@/lib/constants"
 import { useLanguage } from "@/components/language-provider"
+import { getAuthToken } from "@/components/login-form"
+import Cookies from 'js-cookie'
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface User {
   _id: string
@@ -41,58 +44,67 @@ interface User {
 }
 
 export function UsersTable() {
-  const [tableData, setTableData] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { t } = useLanguage()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        setIsLoading(true)
-        const response = await fetch(`${API_URL}/auth/getAll`)
-        
-
-        console.log(response);
+        const response = await fetch(`${API_URL}/auth/getAll`, {
+          headers: {
+            Authorization: `MMA ${getAuthToken()}`,
+          },
+        })
         
         if (!response.ok) {
-          throw new Error("Failed to fetch users")
+          throw new Error('Failed to fetch users')
         }
-        
+
         const data = await response.json()
-          console.log(data);
-        // Transform API data to match the expected format
-        const formattedData = data.users.map((user: User) => ({
-          id: user._id,
-          name: user.userName,
-          email: user.email,
-          role: user.role === "مدير" ? "admin" : user.role === "محرر" ? "editor" : "viewer",
-          avatar: user.image?.secure_url || "/placeholder.svg",
-          initials: user.userName.substring(0, 2),
-          phoneNumber: user.phoneNumber,
-          isActive: user.isActive,
-          image: user.image?.secure_url || "/placeholder.svg"
-        }))
         
-        setTableData(formattedData)
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching users:", err)
-        setError(t("users.load.error"))
-        // Use sample data as fallback
-        setTableData([])
+        // Get current user data from cookies
+        const userDataStr = Cookies.get('userData')
+        const currentUser = userDataStr ? JSON.parse(userDataStr) : null
+        
+        // Filter out the current user from the list
+        const filteredUsers = data.users.filter((user: User) => 
+          user._id !== currentUser?._id
+        )
+        
+        setUsers(filteredUsers)
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء جلب بيانات المستخدمين.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchUsers()
-  }, [t])
+  }, [])
 
   const handleDelete = async (id: string) => {
+    setItemToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return
+
     try {
-      const response = await fetch(`${API_URL}/auth/${id}`, {
+      const response = await fetch(`${API_URL}/auth/delete/${itemToDelete}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `MMA ${getAuthToken()}`,
+        },
       });
 
       if (!response.ok) {
@@ -100,7 +112,7 @@ export function UsersTable() {
       }
 
       // Only update the UI if the API call was successful
-      setTableData(tableData.filter((item) => item.id !== id));
+      setUsers(users.filter((item) => item._id !== itemToDelete));
       toast({
         title: t("user.delete.success.title"),
         description: t("user.delete.success.description"),
@@ -108,10 +120,13 @@ export function UsersTable() {
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
-        title: t("error"),
-        description: t("user.delete.error"),
+        title: t("user.delete.error.title"),
+        description: t("user.delete.error.description"),
         variant: "destructive",
       });
+    } finally {
+      setDeleteDialogOpen(false)
+      setItemToDelete(null)
     }
   }
 
@@ -157,11 +172,11 @@ export function UsersTable() {
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={user.image} alt={user.name} />
-              <AvatarFallback>{user.initials}</AvatarFallback>
+              <AvatarImage src={user.image?.secure_url} alt={user.userName} />
+              <AvatarFallback>{user.userName.substring(0, 2)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{user.name}</div>
+              <div className="font-medium">{user.userName}</div>
               <div className="text-sm text-muted-foreground">{user.email}</div>
             </div>
           </div>
@@ -181,8 +196,8 @@ export function UsersTable() {
       cell: ({ row }) => {
         const role = row.getValue("role") as string
         return (
-          <Badge variant={role === "admin" ? "default" : role === "editor" ? "outline" : "secondary"}>
-            {role === "admin" ? t("admin") : role === "editor" ? t("editor") : t("viewer")}
+          <Badge variant={role === "مدير" ? "default" : role === "محرر" ? "outline" : "secondary"}>
+            {role === "مدير" ? t("admin") : role === "محرر" ? t("editor") : t("viewer")}
           </Badge>
         )
       },
@@ -214,11 +229,11 @@ export function UsersTable() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleEdit(user.id)}>
+              <DropdownMenuItem onClick={() => handleEdit(user._id)}>
                 <Edit className="ml-2 h-4 w-4" />
                 {t("edit")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(user.id)}>
+              <DropdownMenuItem onClick={() => handleDelete(user._id)}>
                 <Trash className="ml-2 h-4 w-4" />
                 {t("delete")}
               </DropdownMenuItem>
@@ -230,7 +245,7 @@ export function UsersTable() {
   ]
 
   const table = useReactTable({
-    data: tableData,
+    data: users,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -254,47 +269,59 @@ export function UsersTable() {
   }
 
   return (
-    <div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+    <>
+      <div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {t("no.users.found")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    {t("no.users.found")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            {t("previous")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            {t("next")}
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          {t("previous")}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          {t("next")}
-        </Button>
-      </div>
-    </div>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false)
+          setItemToDelete(null)
+        }}
+        onConfirm={confirmDelete}
+        title={t("confirm.delete.user.title")}
+        description={t("confirm.delete.user.description")}
+      />
+    </>
   )
 }

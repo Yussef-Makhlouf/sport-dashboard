@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { API_URL } from "@/lib/constants";
 import { Eye, EyeOff } from "lucide-react"
+import { getAuthToken } from "@/components/login-form"
 
 import * as z from "zod"
 
@@ -150,13 +151,28 @@ export function UserForm({ initialData }: UserFormProps = {}) {
 
         const response = await fetch(apiUrl, {
           method: 'PUT',
+          headers: {
+            Authorization: `MMA ${getAuthToken()}`,
+          },
           body: formData,
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
+          const errorData = await response.json();
           console.error("API error response:", errorData);
-          throw new Error(`Failed to update user: ${response.statusText}`);
+          
+          // Handle unauthorized error specifically
+          if (response.status === 400 && errorData.message === 'UnAuthorized to access this api') {
+            toast({
+              title: "غير مصرح",
+              description: "ليس لديك الصلاحية للوصول إلى هذه الصفحة.",
+              variant: "destructive",
+            });
+            router.push("/dashboard"); // Redirect to dashboard if unauthorized
+            return;
+          }
+          
+          throw new Error(errorData.message || `Failed to update user: ${response.status}`);
         }
 
         toast({
@@ -184,6 +200,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              Authorization: `MMA ${getAuthToken()}`,
             },
             body: JSON.stringify(userData),
           });
@@ -191,9 +208,21 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           console.log("API response status:", response.status);
           
           if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
+            const errorData = await response.json();
             console.error("API error response:", errorData);
-            throw new Error(`Failed to create user: ${response.statusText}`);
+            
+            // Handle unauthorized error specifically
+            if (response.status === 400 && errorData.message === 'UnAuthorized to access this api') {
+              toast({
+                title: "غير مصرح",
+                description: "ليس لديك الصلاحية للوصول إلى هذه الصفحة.",
+                variant: "destructive",
+              });
+              router.push("/dashboard"); // Redirect to dashboard if unauthorized
+              return;
+            }
+            
+            throw new Error(errorData.message || `Failed to create user: ${response.status}`);
           }
           
           const responseData = await response.json().catch(() => ({}));
@@ -433,3 +462,4 @@ export function UserForm({ initialData }: UserFormProps = {}) {
     </Form>
   )
 }
+

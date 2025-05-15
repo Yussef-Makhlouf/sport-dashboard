@@ -16,6 +16,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 
+// Add token helper function
+export const getAuthToken = () => {
+  return Cookies.get('token');
+};
+
+// Add auth header helper function
+export const getAuthHeaders = () => {
+  const token = getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+};
+
 const formSchema = z.object({
   email: z.string().email({
     message: "يرجى إدخال عنوان بريد إلكتروني صالح.",
