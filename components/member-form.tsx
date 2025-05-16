@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { API_URL } from "@/lib/constants"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
-import { Loader2 } from "lucide-react"
+import { Loader2, Upload } from "lucide-react"
 
 interface MemberFormProps {
   initialData?: {
@@ -20,10 +20,6 @@ interface MemberFormProps {
       en: string
     }
     position?: {
-      ar: string
-      en: string
-    }
-    description?: {
       ar: string
       en: string
     }
@@ -50,8 +46,6 @@ export function MemberForm({ initialData }: MemberFormProps) {
     nameEn: initialData?.name?.en || "",
     positionAr: initialData?.position?.ar || "",
     positionEn: initialData?.position?.en || "",
-    descriptionAr: initialData?.description?.ar || "",
-    descriptionEn: initialData?.description?.en || "",
     order: initialData?.order || 0,
   })
 
@@ -91,8 +85,6 @@ export function MemberForm({ initialData }: MemberFormProps) {
       formDataToSend.append("name[en]", formData.nameEn)
       formDataToSend.append("position[ar]", formData.positionAr)
       formDataToSend.append("position[en]", formData.positionEn)
-      formDataToSend.append("description[ar]", formData.descriptionAr)
-      formDataToSend.append("description[en]", formData.descriptionEn)
       formDataToSend.append("order", formData.order.toString())
 
       // Add image if available
@@ -141,19 +133,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div>
-            <Label htmlFor="order">{t("Order")}</Label>
-            <Input
-              id="order"
-              name="order"
-              type="number"
-              value={formData.order}
-              onChange={handleChange}
-              required
-              min="0"
-            />
-          </div>
-          <div>
-            <Label htmlFor="nameAr">{t("Name (Arabic)")}</Label>
+            <Label htmlFor="nameAr">{t("name.ar")}</Label>
             <Input
               id="nameAr"
               name="nameAr"
@@ -165,7 +145,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
           </div>
           
           <div>
-            <Label htmlFor="positionAr">{t("Position (Arabic)")}</Label>
+            <Label htmlFor="positionAr">{t("position.ar")}</Label>
             <Input
               id="positionAr"
               name="positionAr"
@@ -175,23 +155,11 @@ export function MemberForm({ initialData }: MemberFormProps) {
               dir="rtl"
             />
           </div>
-          
-          <div>
-            <Label htmlFor="descriptionAr">{t("Description (Arabic)")}</Label>
-            <Textarea
-              id="descriptionAr"
-              name="descriptionAr"
-              value={formData.descriptionAr}
-              onChange={handleChange}
-              rows={4}
-              dir="rtl"
-            />
-          </div>
         </div>
         
         <div className="space-y-4">
           <div>
-            <Label htmlFor="nameEn">{t("Name (English)")}</Label>
+            <Label htmlFor="nameEn">{t("name.en")}</Label>
             <Input
               id="nameEn"
               name="nameEn"
@@ -202,7 +170,7 @@ export function MemberForm({ initialData }: MemberFormProps) {
           </div>
           
           <div>
-            <Label htmlFor="positionEn">{t("Position (English)")}</Label>
+            <Label htmlFor="positionEn">{t("position.en")}</Label>
             <Input
               id="positionEn"
               name="positionEn"
@@ -211,33 +179,46 @@ export function MemberForm({ initialData }: MemberFormProps) {
               required
             />
           </div>
-          
-          <div>
-            <Label htmlFor="descriptionEn">{t("Description (English)")}</Label>
-            <Textarea
-              id="descriptionEn"
-              name="descriptionEn"
-              value={formData.descriptionEn}
-              onChange={handleChange}
-              rows={4}
-            />
-          </div>
         </div>
+      </div>
+
+      <div className="w-32">
+        <Label htmlFor="order">{t("order")}</Label>
+        <Input
+          id="order"
+          name="order"
+          type="number"
+          value={formData.order}
+          onChange={handleChange}
+          required
+          min="0"
+          className="w-full"
+        />
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="image">{t("Member Image")}</Label>
-          <Input
-            id="image"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-          />
+          <Label htmlFor="image">{t("member.image")}</Label>
+          <div className="relative">
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <label
+              htmlFor="image"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#BB2121] text-white rounded-md cursor-pointer hover:bg-[#C20000] transition-colors duration-200 text-sm w-fit"
+            >
+              <Upload className="w-4 h-4" />
+              <span className="text-sm">{t("choose.image")}</span>
+            </label>
+          </div>
         </div>
 
         {imagePreview && (
-          <div className="relative h-40 w-40 rounded-md overflow-hidden">
+          <div className="relative h-40 w-40 rounded-md overflow-hidden border border-[#BB2121]">
             <Image
               src={imagePreview}
               alt="Member preview"
@@ -255,11 +236,11 @@ export function MemberForm({ initialData }: MemberFormProps) {
           className="mr-2"
           onClick={() => router.back()}
         >
-          {t("Cancel")}
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {initialData?._id ? t("Update Member") : t("Create Member")}
+          {initialData?._id ? t("update.member") : t("create.member")}
         </Button>
       </div>
     </form>

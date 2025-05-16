@@ -24,6 +24,13 @@ import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import Cookies from 'js-cookie'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // Define the type for member items from your API
 interface MemberItem {
@@ -253,20 +260,20 @@ export function MembersTable() {
   const columns: ColumnDef<MemberItem>[] = [
     {
       accessorKey: "image",
-      header: t("Image"),
+      header: () => <div className="text-center">{t("Image")}</div>,
       cell: ({ row }) => {
         const member = row.original
         
         // Add null check for image
         if (!member.image || !member.image.secure_url) {
-          return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md"></div>
+          return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md mx-auto"></div>
         }
         
         return (
-          <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
+          <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md mx-auto">
             <img
               src={member.image.secure_url}
-              alt={member.name?.ar || "Member image"}
+              alt={member.name?.[language] || "Member image"}
               className="w-full h-full object-cover"
             />
           </div>
@@ -275,56 +282,57 @@ export function MembersTable() {
     },
     {
       accessorKey: "name",
-      header: t("Name"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'الاسم' : t("Name")}</div>,
       cell: ({ row }) => {
         const member = row.original
         // Add null check for name
-        const name = member.name?.ar
-        return <div className="font-medium">{name}</div>
+        const name = member.name?.[language]
+        return <div className={`font-medium ${language === 'ar' ? 'text-right' : 'text-left'}`}>{name}</div>
       },
     },
     {
       accessorKey: "position",
-      header: t("Position"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'المنصب' : t("Position")}</div>,
       cell: ({ row }) => {
         const member = row.original
         // Add null check for position
-        const position = member.position?.ar
-        return <div>{position}</div>
+        const position = member.position?.[language]
+        return <div className={`${language === 'ar' ? 'text-right' : 'text-left'}`}>{position}</div>
       },
     },
-
     {
       id: "actions",
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'الإجراءات' : t("Actions")}</div>,
       cell: ({ row }) => {
         const member = row.original
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">{t("Open menu")}</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleViewProfile(member)}>
-                <Eye className="ml-2 h-4 w-4" />
-                {t("View Profile")}
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/members/edit/${member._id}`}>
-                  <Edit className="ml-2 h-4 w-4" />
-                  {t("Edit")}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(member._id)}>
-                <Trash className="ml-2 h-4 w-4" />
-                {t("Delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className={language === 'ar' ? 'text-right' : 'text-left'}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">{language === 'ar' ? 'فتح القائمة' : t("Open menu")}</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align={language === 'ar' ? 'start' : 'end'}>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleViewProfile(member)}>
+                  <Eye className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                  {language === 'ar' ? 'عرض الملف الشخصي' : t("View Profile")}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/members/edit/${member._id}`}>
+                    <Edit className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                    {language === 'ar' ? 'تعديل' : t("Edit")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDelete(member._id)}>
+                  <Trash className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                  {language === 'ar' ? 'حذف' : t("Delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )
       },
     },
@@ -400,13 +408,61 @@ export function MembersTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          {t("Previous")}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          {t("Next")}
-        </Button>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">
+            {language === 'ar' ? 'عدد العناصر في الصفحة' : 'Rows per page'}
+          </p>
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value))
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent side={language === 'ar' ? 'left' : 'right'}>
+              {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={`${pageSize}`}>
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {language === 'ar' ? 'السابق' : 'Previous'}
+          </Button>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium">
+              {language === 'ar' ? 'صفحة' : 'Page'}
+            </span>
+            <span className="text-sm font-medium">
+              {table.getState().pagination.pageIndex + 1}
+            </span>
+            <span className="text-sm font-medium">
+              {language === 'ar' ? 'من' : 'of'}
+            </span>
+            <span className="text-sm font-medium">
+              {table.getPageCount()}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            {language === 'ar' ? 'التالي' : 'Next'}
+          </Button>
+        </div>
       </div>
     </div>
   )
