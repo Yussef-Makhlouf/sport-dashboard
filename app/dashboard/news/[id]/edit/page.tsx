@@ -5,6 +5,7 @@ import { NewsForm } from "@/components/news-form"
 import { API_URL } from "@/lib/constants"
 import { useLanguage } from "@/components/language-provider"
 import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 
 
 interface NewsData {
@@ -23,7 +24,9 @@ interface NewsData {
   [key: string]: any
 }
 
-export default function EditNewsPage({ params }: { params: { id: string } }) {
+export default function EditNewsPage() {
+  const params = useParams()
+  const newsId = params.id as string
   const { t } = useLanguage()
   const [newsData, setNewsData] = useState<NewsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,7 +36,7 @@ export default function EditNewsPage({ params }: { params: { id: string } }) {
     const fetchNewsData = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${API_URL}/news/getnewsbyid/${params.id}`, {
+        const response = await fetch(`${API_URL}/news/getnewsbyid/${newsId}`, {
           cache: 'no-store'
         })
         
@@ -54,7 +57,7 @@ export default function EditNewsPage({ params }: { params: { id: string } }) {
     }
 
     fetchNewsData()
-  }, [params.id, t])
+  }, [newsId, t])
 
   if (loading) {
     return (

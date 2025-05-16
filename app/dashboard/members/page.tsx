@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import { MembersTable } from "@/components/members-table"
 import { useLanguage } from "@/components/language-provider"
+import { metadata } from "../layout"
 
 export default function MembersPage() {
   const { t } = useLanguage()
   const [error, setError] = useState<string | null>(null)
-
-  // Add error boundary/handling
+ // Add error boundary/handling
   useEffect(() => {
     // Reset any previous errors when component mounts
     setError(null)
