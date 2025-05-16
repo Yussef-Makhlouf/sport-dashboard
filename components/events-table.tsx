@@ -23,7 +23,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
+import { useLanguage } from "@/components/language-provider"
+import { showToast } from "@/lib/utils"
 
 // بيانات نموذجية - في تطبيق حقيقي، ستأتي هذه من API
 const upcomingEvents = [
@@ -84,13 +86,11 @@ interface EventsTableProps {
 export function EventsTable({ type }: EventsTableProps) {
   const initialData = type === "upcoming" ? upcomingEvents : pastEvents
   const [tableData, setTableData] = useState(initialData)
+  const { t } = useLanguage()
 
   const handleDelete = (id: string) => {
     setTableData(tableData.filter((item) => item.id !== id))
-    toast({
-      title: "تم حذف الفعالية",
-      description: "تم حذف الفعالية بنجاح.",
-    })
+    showToast.success(t, "event.deleted", "event.deleted.description")
   }
 
   const columns: ColumnDef<(typeof initialData)[0]>[] = [

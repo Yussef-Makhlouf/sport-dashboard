@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/components/language-provider"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { API_URL } from "@/lib/constants"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
-import { Loader2, Upload } from "lucide-react"
+import { Loader2, Upload, XCircle, Camera } from "lucide-react"
+import { UploadImage } from "@/components/upload-image"
 
 interface MemberFormProps {
   initialData?: {
@@ -41,9 +42,6 @@ export function MemberForm({ initialData }: MemberFormProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    initialData?.image?.secure_url || null
-  )
 
   const [formData, setFormData] = useState({
     nameAr: initialData?.name?.ar || "",
@@ -65,18 +63,8 @@ export function MemberForm({ initialData }: MemberFormProps) {
     }))
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setImageFile(file)
-
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+  const handleImageChange = (file: File | null) => {
+    setImageFile(file)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,38 +215,11 @@ export function MemberForm({ initialData }: MemberFormProps) {
         />
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="image">{t("member.image")}</Label>
-          <div className="relative">
-            <Input
-              id="image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-            <label
-              htmlFor="image"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#BB2121] text-white rounded-md cursor-pointer hover:bg-[#C20000] transition-colors duration-200 text-sm w-fit"
-            >
-              <Upload className="w-4 h-4" />
-              <span className="text-sm">{t("choose.image")}</span>
-            </label>
-          </div>
-        </div>
-
-        {imagePreview && (
-          <div className="relative h-40 w-40 rounded-md overflow-hidden border border-[#BB2121]">
-            <Image
-              src={imagePreview}
-              alt="Member preview"
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
-      </div>
+      <UploadImage 
+        label={t("member.image")}
+        initialImage={initialData?.image?.secure_url}
+        onChange={handleImageChange}
+      />
 
       <div className="flex justify-end">
         <Button

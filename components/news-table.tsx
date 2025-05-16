@@ -20,10 +20,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Edit, MoreHorizontal, Trash, Eye } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { showToast } from "@/lib/utils"
 
 // Define the type for news items from your API
 interface NewsItem {
@@ -60,6 +61,7 @@ export function NewsTable() {
   const { t, language } = useLanguage()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+  const [pageSize, setPageSize] = useState(5)
 
   // Fetch data on the client side only
   useEffect(() => {
@@ -107,17 +109,10 @@ export function NewsTable() {
       // Update the UI after successful deletion
       setTableData(tableData.filter((item) => item._id !== itemToDelete))
       
-      toast({
-        title: t("success"),
-        description: t("news.delete.success"),
-      })
+      showToast.success(t, "success", "news.delete.success")
     } catch (err) {
       console.error("Error deleting news:", err)
-      toast({
-        title: t("error"),
-        description: t("news.delete.error"),
-        variant: "destructive",
-      })
+      showToast.error(t, "error", "news.delete.error")
     } finally {
       setDeleteDialogOpen(false)
       setItemToDelete(null)
@@ -246,7 +241,7 @@ export function NewsTable() {
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
-        pageSize: 5,
+        pageSize: pageSize,
       },
     },
   })
@@ -303,13 +298,49 @@ export function NewsTable() {
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            {t("previous")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            {t("next")}
-          </Button>
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">{t("news.per.page")}</p>
+            <select
+              value={pageSize}
+              onChange={e => {
+                const newSize = Number(e.target.value)
+                setPageSize(newSize)
+                table.setPageSize(newSize)
+              }}
+              className="h-8 w-16 rounded-md border border-input bg-background px-2 py-1 text-sm"
+            >
+              {[5, 10, 20, 50].map(size => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span className="flex items-center gap-1 text-sm">
+              <div>{t("page")}</div>
+              <strong>
+                {table.getState().pagination.pageIndex + 1} {t("of")} {table.getPageCount()}
+              </strong>
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              {t("previous")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              {t("next")}
+            </Button>
+          </div>
         </div>
       </div>
       <ConfirmDialog

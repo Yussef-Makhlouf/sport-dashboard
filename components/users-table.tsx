@@ -22,12 +22,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { API_URL } from "@/lib/constants"
 import { useLanguage } from "@/components/language-provider"
 import { getAuthToken } from "@/components/login-form"
 import Cookies from 'js-cookie'
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { showToast } from "@/lib/utils"
 
 interface User {
   _id: string
@@ -113,17 +114,10 @@ export function UsersTable() {
 
       // Only update the UI if the API call was successful
       setUsers(users.filter((item) => item._id !== itemToDelete));
-      toast({
-        title: t("user.delete.success.title"),
-        description: t("user.delete.success.description"),
-      });
+      showToast.success(t, "user.delete.success.title", "user.delete.success.description");
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast({
-        title: t("user.delete.error.title"),
-        description: t("user.delete.error.description"),
-        variant: "destructive",
-      });
+      showToast.error(t, "user.delete.error.title", "user.delete.error.description");
     } finally {
       setDeleteDialogOpen(false)
       setItemToDelete(null)
@@ -143,11 +137,7 @@ export function UsersTable() {
       return data;
     } catch (error) {
       console.error('Error fetching user:', error);
-      toast({
-        title: t("error"),
-        description: t("user.fetch.error"),
-        variant: "destructive",
-      });
+      showToast.error(t, "error", "user.fetch.error");
       return null;
     }
   }

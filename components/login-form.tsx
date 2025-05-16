@@ -14,7 +14,8 @@ import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
+import { showToast } from "@/lib/utils"
 
 // Add token helper function
 export const getAuthToken = () => {
@@ -80,10 +81,7 @@ export function LoginForm() {
       
       if (response.ok) {
         // Successful login
-        toast({
-          title: "تم تسجيل الدخول بنجاح",
-          description: data.message || "مرحبًا بك في لوحة تحكم إدارة الرياضة.",
-        })
+        showToast.success(t, "login.success", data.message || "welcome.message")
         
         // Store user data and token if available
         if (data.userUpdated) {
@@ -110,19 +108,11 @@ export function LoginForm() {
         router.push(redirectPath)
       } else {
         // Failed login
-        toast({
-          title: "فشل تسجيل الدخول",
-          description: data.message || "حدث خطأ أثناء تسجيل الدخول.",
-          variant: "destructive",
-        })
-        console.error("Login failed:", data)
+        showToast.error(t, "login.failed", "password.incorrect")
+        console.error("Error during login:", data)
       }
     } catch (error) {
-      toast({
-        title: "خطأ في الاتصال",
-        description: "حدث خطأ أثناء محاولة الاتصال بالخادم.",
-        variant: "destructive",
-      })
+      showToast.error(t, "login.failed", "password.incorrect")
       console.error("Error during login:", error)
     } finally {
       setIsLoading(false)

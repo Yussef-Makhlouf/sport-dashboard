@@ -10,8 +10,9 @@ import { useLanguage } from "@/components/language-provider"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { API_URL } from "@/lib/constants"
+import { showToast } from "@/lib/utils"
 
 export function ResetPasswordForm() {
   const router = useRouter()
@@ -54,6 +55,9 @@ export function ResetPasswordForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
+    // Show loading toast
+    showToast.loading(t, "resetting.password", "please.wait")
+
     try {
       const response = await fetch(`${API_URL}/auth/reset-password`, {
         method: 'POST',
@@ -65,54 +69,52 @@ export function ResetPasswordForm() {
           newPassword: values.password,
           email: localStorage.getItem('resetEmail') // Get email from localStorage
         }),
-      });
+      })
 
       // Debug response info
-      const contentType = response.headers.get('content-type');
-      console.log('Response status:', response.status);
-      console.log('Response content-type:', contentType);
+      const contentType = response.headers.get('content-type')
+      console.log('Response status:', response.status)
+      console.log('Response content-type:', contentType)
       
-      let data;
+      let data
       
       // Handle different response types
       if (!contentType || !contentType.includes('application/json')) {
         // For non-JSON responses, try to get the text content for better error handling
-        const textResponse = await response.text();
-        console.log('Raw server response:', textResponse);
+        const textResponse = await response.text()
+        console.log('Raw server response:', textResponse)
         
         // Try to parse text as JSON in case the Content-Type header is wrong
         try {
-          data = JSON.parse(textResponse);
+          data = JSON.parse(textResponse)
         } catch (parseError) {
           // If it's truly not JSON, throw error with the response text if available
-          throw new Error(`API returned non-JSON response: ${textResponse.substring(0, 100) || 'Empty response'}`);
+          throw new Error(`API returned non-JSON response: ${textResponse.substring(0, 100) || 'Empty response'}`)
         }
       } else {
         // Regular JSON parsing
-        data = await response.json();
+        data = await response.json()
       }
 
       if (!response.ok) {
         throw new Error(data.message || (language === "ar"
           ? 'حدث خطأ أثناء إعادة تعيين كلمة المرور'
-          : 'Error resetting password'));
+          : 'Error resetting password'))
       }
 
-      toast({
-        title: t("reset.password"),
-        description: data.message,
-      });
+      showToast.success(t, "password.reset.success", data.message)
 
-      router.push("/login");
+      router.push("/login")
     } catch (error) {
-      console.error('Error resetting password:', error);
-      toast({
-        title: t("error"),
-        description: error instanceof Error ? error.message : t("error"),
-        variant: "destructive",
-      });
+      console.error('Error resetting password:', error)
+      showToast.error(
+        t, 
+        "password.reset.error", 
+        "password.reset.failed", 
+        error instanceof Error ? error.message : undefined
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 

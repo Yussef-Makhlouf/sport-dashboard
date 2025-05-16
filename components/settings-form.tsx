@@ -10,9 +10,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { useTheme } from "next-themes"
+import { showToast } from "@/lib/utils"
 
 const formSchema = z.object({
   language: z.enum(["ar", "en"], {
@@ -43,6 +44,9 @@ export function SettingsForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
+    // Show loading toast
+    showToast.loading(t, "saving.settings", "please.wait")
+
     // In a real application, you would send the data to an API
     setTimeout(() => {
       setIsLoading(false)
@@ -51,10 +55,7 @@ export function SettingsForm() {
       setLanguage(values.language)
       setTheme(values.theme)
 
-      toast({
-        title: "تم حفظ الإعدادات",
-        description: "تم حفظ الإعدادات بنجاح.",
-      })
+      showToast.success(t, "settings.saved", "settings.saved.description")
     }, 1000)
   }
 

@@ -14,55 +14,11 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { useLanguage } from "@/components/language-provider"
+import { showToast } from "@/lib/utils"
 
 // Define your API URL - adjust as needed for your environment
-
-const formSchema = z.object({
-  name: z.string().min(3, {
-    message: "يجب أن يكون الاسم 3 أحرف على الأقل.",
-  }),
-  email: z.string().email({
-    message: "يرجى إدخال عنوان بريد إلكتروني صالح.",
-  }),
-  phoneNumber: z.string().min(10, {
-    message: "يرجى إدخال رقم هاتف صالح.",
-  }),
-  role: z.enum(['مدير', 'محرر', 'مستخدم'], {
-    required_error: "يرجى اختيار دور.",
-  }),
-  status: z.enum(["active", "inactive"], {
-    required_error: "يرجى اختيار حالة.",
-  }),
-  password: z
-    .string()
-    .min(8, {
-      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-    })
-    .optional()
-    .or(z.literal("")),
-  confirmPassword: z
-    .string()
-    .min(8, {
-      message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-    })
-    .optional()
-    .or(z.literal("")),
-  image: z.object({
-    secure_url: z.string(),
-    public_id: z.string()
-  }).optional()
-}).refine((data) => {
-  // Only validate password confirmation if password is provided
-  if (data.password) {
-    return data.password === data.confirmPassword;
-  }
-  return true;
-}, {
-  message: "كلمات المرور غير متطابقة.",
-  path: ["confirmPassword"],
-});
 
 interface UserFormProps {
   initialData?: {
@@ -86,9 +42,55 @@ export function UserForm({ initialData }: UserFormProps = {}) {
   const [imagePreview, setImagePreview] = useState<string>(initialData?.image?.secure_url || '')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   
   console.log("UserForm component rendered", { initialData });
+
+  // Define the form schema with translated messages
+  const formSchema = z.object({
+    name: z.string().min(3, {
+      message: t("name.min.length.error") || "Name must be at least 3 characters.",
+    }),
+    email: z.string().email({
+      message: t("email.invalid.error") || "Please enter a valid email address.",
+    }),
+    phoneNumber: z.string().min(10, {
+      message: t("phone.number.invalid.error") || "Please enter a valid phone number.",
+    }),
+    role: z.enum(['مدير', 'محرر', 'مستخدم'], {
+      required_error: t("role.required.error") || "Please select a role.",
+    }),
+    status: z.enum(["active", "inactive"], {
+      required_error: t("status.required.error") || "Please select a status.",
+    }),
+    password: z
+      .string()
+      .min(8, {
+        message: t("password.min.length.error") || "Password must be at least 8 characters.",
+      })
+      .optional()
+      .or(z.literal("")),
+    confirmPassword: z
+      .string()
+      .min(8, {
+        message: t("password.min.length.error") || "Password must be at least 8 characters.",
+      })
+      .optional()
+      .or(z.literal("")),
+    image: z.object({
+      secure_url: z.string(),
+      public_id: z.string()
+    }).optional()
+  }).refine((data) => {
+    // Only validate password confirmation if password is provided
+    if (data.password) {
+      return data.password === data.confirmPassword;
+    }
+    return true;
+  }, {
+    message: t("passwords.not.matching.error") || "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -128,10 +130,12 @@ export function UserForm({ initialData }: UserFormProps = {}) {
   }
 
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log("Form submitted with values:", values);
-    setIsLoading(true);
-
+    setIsLoading(true)
+    
     try {
+      // Show a loading toast
+      showToast.loading(t, initialData?.id ? "updating.user" : "creating.user")
+
       if (initialData?.id) {
         console.log("Updating existing user:", initialData.id);
         const apiUrl = `${API_URL}/auth/update/${initialData.id}`;
@@ -163,11 +167,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           
           // Handle unauthorized error specifically
           if (response.status === 400 && errorData.message === 'UnAuthorized to access this api') {
-            toast({
-              title: "غير مصرح",
-              description: "ليس لديك الصلاحية للوصول إلى هذه الصفحة.",
-              variant: "destructive",
-            });
+            showToast.error(t, "unauthorized.title", "unauthorized.description");
             router.push("/dashboard"); // Redirect to dashboard if unauthorized
             return;
           }
@@ -175,10 +175,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           throw new Error(errorData.message || `Failed to update user: ${response.status}`);
         }
 
-        toast({
-          title: "تم تحديث المستخدم",
-          description: "تم تحديث المستخدم بنجاح.",
-        });
+        showToast.success(t, "user.updated.title", "user.updated.description");
       } else {
         console.log("Creating new user, preparing API call");
         // Create new user
@@ -213,11 +210,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
             
             // Handle unauthorized error specifically
             if (response.status === 400 && errorData.message === 'UnAuthorized to access this api') {
-              toast({
-                title: "غير مصرح",
-                description: "ليس لديك الصلاحية للوصول إلى هذه الصفحة.",
-                variant: "destructive",
-              });
+              showToast.error(t, "unauthorized.title", "unauthorized.description");
               router.push("/dashboard"); // Redirect to dashboard if unauthorized
               return;
             }
@@ -228,10 +221,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
           const responseData = await response.json().catch(() => ({}));
           console.log("API success response:", responseData);
 
-          toast({
-            title: "تم إنشاء المستخدم",
-            description: "تم إنشاء المستخدم بنجاح.",
-          });
+          showToast.success(t, "user.created.title", "user.created.description");
         } catch (fetchError) {
           console.error("Fetch error:", fetchError);
           throw fetchError;
@@ -242,11 +232,12 @@ export function UserForm({ initialData }: UserFormProps = {}) {
       router.push("/dashboard/users");
     } catch (error) {
       console.error("Error during form submission:", error);
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء حفظ المستخدم.",
-        variant: "destructive",
-      });
+      showToast.error(
+        t, 
+        "user.save.error.title", 
+        "user.save.error.description", 
+        error instanceof Error ? error.message : undefined
+      );
     } finally {
       setIsLoading(false);
       console.log("Form submission process completed");
@@ -269,7 +260,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
               <FormItem>
                 <FormLabel>{t("name")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="أدخل اسم المستخدم" {...field} />
+                  <Input placeholder={language === "en" ? "Enter user name" : "أدخل اسم المستخدم"} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -295,9 +286,9 @@ export function UserForm({ initialData }: UserFormProps = {}) {
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("رقم الهاتف") || "phoneNumber"}</FormLabel>
+                <FormLabel>{t("phoneNumber") || "phoneNumber"}</FormLabel>
                 <FormControl>
-                  <Input placeholder="أدخل رقم الهاتف" {...field} />
+                  <Input placeholder={language === "en" ? "Enter phone number" : "أدخل رقم الهاتف"} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

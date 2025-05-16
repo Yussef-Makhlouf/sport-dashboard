@@ -8,8 +8,9 @@ import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { useLanguage } from "@/components/language-provider"
+import { showToast } from "@/lib/utils"
 
 export function PasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -51,14 +52,14 @@ export function PasswordForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
+    // Show loading toast
+    showToast.loading(t, "changing.password", "please.wait")
+
     // In a real application, you would send the data to an API
     setTimeout(() => {
       setIsLoading(false)
 
-      toast({
-        title: language === "ar" ? "تم تغيير كلمة المرور" : "Password Changed",
-        description: language === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Your password has been changed successfully.",
-      })
+      showToast.success(t, "password.changed", "password.changed.description")
 
       form.reset()
     }, 1000)

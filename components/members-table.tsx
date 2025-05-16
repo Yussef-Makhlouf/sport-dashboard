@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Edit, MoreHorizontal, Trash, Eye } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import Cookies from 'js-cookie'
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { showToast } from "@/lib/utils"
 
 // Define the type for member items from your API
 interface MemberItem {
@@ -201,17 +202,10 @@ export function MembersTable() {
       // Update the UI after successful deletion
       setTableData(tableData.filter((item) => item._id !== id))
       
-      toast({
-        title: t("member.deleted"),
-        description: t("member.deleted.description"),
-      })
+      showToast.success(t, "member.deleted", "member.deleted.description")
     } catch (err) {
       console.error("Error deleting member:", err)
-      toast({
-        title: t("Error"),
-        description: t("Failed to delete member. Please try again."),
-        variant: "destructive",
-      })
+      showToast.error(t, "error", "member.delete.error")
     }
   }
 
@@ -248,11 +242,7 @@ export function MembersTable() {
       window.location.href = '/dashboard/members/profile'
     } catch (error) {
       console.error('Error storing member data:', error)
-      toast({
-        title: t("Error"),
-        description: t("Failed to view member profile. Please try again."),
-        variant: "destructive"
-      })
+      showToast.error(t, "error", "profile.view.error")
     }
   }
 
