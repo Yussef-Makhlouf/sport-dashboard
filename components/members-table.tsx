@@ -24,7 +24,6 @@ import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import Cookies from 'js-cookie'
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 // Define the type for member items from your API
 interface MemberItem {
@@ -262,17 +261,17 @@ export function MembersTable() {
   const columns: ColumnDef<MemberItem>[] = [
     {
       accessorKey: "image",
-      header: t("Image"),
+      header: () => <div className="text-center">{t("Image")}</div>,
       cell: ({ row }) => {
         const member = row.original
         
         // Add null check for image
         if (!member.image || !member.image.secure_url) {
-          return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md"></div>
+          return <div className="w-[80px] h-[50px] bg-gray-200 rounded-md mx-auto"></div>
         }
         
         return (
-          <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md">
+          <div className="w-[80px] h-[50px] relative overflow-hidden rounded-md mx-auto">
             <img
               src={member.image.secure_url}
               alt={member.name?.[language] || "Member image"}
@@ -284,27 +283,27 @@ export function MembersTable() {
     },
     {
       accessorKey: "name",
-      header: t("Name"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'الاسم' : t("Name")}</div>,
       cell: ({ row }) => {
         const member = row.original
         // Add null check for name
-        const name = member.name?.[language]
+        const name = member.name?.ar
         return <div className="font-medium">{name}</div>
       },
     },
     {
       accessorKey: "position",
-      header: t("Position"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'المنصب' : t("Position")}</div>,
       cell: ({ row }) => {
         const member = row.original
         // Add null check for position
-        const position = member.position?.[language]
+        const position = member.position?.ar
         return <div>{position}</div>
       },
     },
-
     {
       id: "actions",
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'الإجراءات' : t("Actions")}</div>,
       cell: ({ row }) => {
         const member = row.original
         return (
@@ -369,66 +368,54 @@ export function MembersTable() {
   }
 
   return (
-    <>
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">{t("members.management")}</h2>
-          <Link href="/dashboard/members/create">
-            <Button>{t("add.member")}</Button>
-          </Link>
-        </div>
-        
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">{t("members.management")}</h2>
+        <Link href="/dashboard/members/create">
+          <Button>{t("add.member")}</Button>
+        </Link>
+      </div>
+      
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {t("No members found.")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            {t("Previous")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            {t("Next")}
-          </Button>
-        </div>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  {t("No members found.")}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
-      <ConfirmDialog
-        isOpen={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false)
-          setItemToDelete(null)
-        }}
-        onConfirm={confirmDelete}
-        title={t("confirm.delete.member.title")}
-        description={t("confirm.delete.member.description")}
-      />
-    </>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+          {t("Previous")}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          {t("Next")}
+        </Button>
+      </div>
+    </div>
   )
 }
