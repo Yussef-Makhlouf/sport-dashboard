@@ -1,252 +1,175 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Edit, MoreHorizontal, Trash } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useLanguage } from "@/components/language-provider"
+import { toast } from "@/hooks/use-toast"
 import { API_URL } from "@/lib/constants"
+import { getAuthToken } from "@/components/login-form"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { showToast } from "@/lib/utils"
+import Cookies from 'js-cookie'
 
-// Define the user data type
-interface User {
-  _id: string
-  userName: string
-  email: string
-  role: string
-  isActive: boolean
-  image?: {
-    public_id: string
-    secure_url: string
-  }
-  createdAt: string
-}
+const profileSchema = z.object({
+  userName: z.string().min(3, { message: "Name must be at least 3 characters" }),
+  email: z.string().email({ message: "Invalid email address" }),
+  phoneNumber: z.string().min(0,{ message: "Invalid phone number" }),
+  role: z.string(),
+})
 
-export function UserTable() {
-  const [tableData, setTableData] = useState<User[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+type ProfileFormValues = z.infer<typeof profileSchema>
+
+export function ProfileForm() {
   const { t } = useLanguage()
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>("")
 
-  // Fetch users data
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setIsLoading(true)
-        const response = await fetch(`${API_URL}/auth/getUser`)
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch users")
-        }
-        
-        const data = await response.json()
-        setTableData(data.users || [])
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching users:", err)
-        setError("Failed to load users. Please try again later.")
-        setTableData([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchUsers()
-  }, [])
-
-  const handleDelete = async (id: string) => {
-    try {
-      // In a real app, you would call an API to delete the user
-      // const response = await fetch(`http://localhost:6060/user/delete/${id}`, {
-      //   method: 'DELETE',
-      // });
-      
-      // if (!response.ok) {
-      //   throw new Error('Failed to delete user');
-      // }
-      
-      // Update the UI after successful deletion
-      setTableData(tableData.filter((item) => item._id !== id))
-      
-      toast({
-        title: "تم حذف المستخدم",
-        description: "تم حذف المستخدم بنجاح.",
-      })
-    } catch (err) {
-      console.error("Error deleting user:", err)
-      toast({
-        title: "خطأ",
-        description: "فشل حذف المستخدم. يرجى المحاولة مرة أخرى.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Define columns
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: "image",
-      header: "الصورة",
-      cell: ({ row }) => {
-        const user = row.original
-        const imageUrl = user.image?.secure_url || "/placeholder-avatar.png"
-        
-        return (
-          <div className="w-10 h-10 relative overflow-hidden rounded-full">
-            <img
-              src={imageUrl}
-              alt={user.userName}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "userName",
-      header: "اسم المستخدم",
-    },
-    {
-      accessorKey: "email",
-      header: "البريد الإلكتروني",
-    },
-    {
-      accessorKey: "role",
-      header: "الدور",
-    },
-    {
-      accessorKey: "isActive",
-      header: "الحالة",
-      cell: ({ row }) => {
-        const isActive = row.original.isActive
-        return (
-          <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-            isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-          }`}>
-            {isActive ? "نشط" : "غير نشط"}
-          </div>
-        )
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const user = row.original
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">فتح القائمة</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/users/${user._id}/edit`}>
-                  <Edit className="ml-2 h-4 w-4" />
-                  تعديل
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(user._id)}>
-                <Trash className="ml-2 h-4 w-4" />
-                حذف
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-    },
-  ]
-
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 5,
-      },
+  // Get user data from cookies
+  const userDataStr = Cookies.get('userData')
+  const userData = userDataStr ? JSON.parse(userDataStr) : null
+  console.log(userData);
+  
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      userName: userData?.userName || "",
+      email: userData?.email || "",
+      phoneNumber: userData?.phoneNumber || "",
+      role: userData?.role || "",
     },
   })
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BB2121] border-r-transparent"></div>
-        <p className="mr-2">جاري التحميل...</p>
-      </div>
-    )
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedImage(file)
+      setPreviewUrl(URL.createObjectURL(file))
+    }
   }
 
-  if (error) {
-    return (
-      <div className="p-4 text-center text-red-500 bg-red-50 rounded-md">
-        {error}
-      </div>
-    )
+  const onSubmit = async (data: ProfileFormValues) => {
+    setIsLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append("userName", data.userName)
+      formData.append("email", data.email)
+      formData.append("phoneNumber", data.phoneNumber)
+      formData.append("role", data.role)
+      if (selectedImage) {
+        formData.append("image", selectedImage)
+      }
+
+      const response = await fetch(`${API_URL}/auth/updateProfile/${userData._id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `MMA ${getAuthToken()}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || t("user.save.error.description"))
+      }
+
+      const updatedUser = await response.json()
+      
+      // Update user data in cookies
+      Cookies.set('userData', JSON.stringify(updatedUser.user))
+      
+      showToast.success(t, "user.updated.title", "user.updated.description")
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      const errorMessage = error instanceof Error ? error.message : t("user.save.error.description")
+      toast({
+        title: t("user.save.error.title"),
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  لم يتم العثور على مستخدمين.
-                </TableCell>
-              </TableRow>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={previewUrl || userData?.image?.secure_url} alt={userData?.userName} />
+            <AvatarFallback>{userData?.userName?.substring(0, 2)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <Label htmlFor="image">{t("profile.image")}</Label>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-2"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="userName">{t("name")}</Label>
+            <Input
+              id="userName"
+              {...form.register("userName")}
+              placeholder={t("name")}
+            />
+            {form.formState.errors.userName && (
+              <p className="text-sm text-red-500">{form.formState.errors.userName.message}</p>
             )}
-          </TableBody>
-        </Table>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">{t("email")}</Label>
+            <Input
+              id="email"
+              type="email"
+              {...form.register("email")}
+              placeholder={t("email")}
+            />
+            {form.formState.errors.email && (
+              <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">{t("phone.number")}</Label>
+            <Input
+              id="phoneNumber"
+              {...form.register("phoneNumber")}
+              placeholder={t("phone.number")}
+            />
+            {form.formState.errors.phoneNumber && (
+              <p className="text-sm text-red-500">{form.formState.errors.phoneNumber.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="role">{t("role")}</Label>
+            <Input
+              id="role"
+              value={userData?.role || ""}
+              disabled
+              className="bg-muted cursor-not-allowed"
+            />
+          </div>
+        </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          السابق
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          التالي
-        </Button>
-      </div>
-    </div>
+
+      <Button type="submit" disabled={isLoading}>
+        {isLoading ? t("saving") : t("update.profile")}
+      </Button>
+    </form>
   )
 }

@@ -99,6 +99,7 @@ export function LoginForm() {
             email: data.userUpdated.email,
             role: data.userUpdated.role,
             isActive: data.userUpdated.isActive,
+            phoneNumber: data.userUpdated.phoneNumber,
           };
           
           Cookies.set('userData', JSON.stringify(userData), { expires: 7, secure: true });

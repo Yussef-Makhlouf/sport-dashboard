@@ -20,8 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
-import { UploadMultipleImages } from "@/components/upload-multiple-images"
-
+import { ConfirmDialog } from "./ui/confirm-dialog"
+ 
 // Define form validation schema
 const formSchema = z.object({
   title_ar: z.string().min(3, {
@@ -78,10 +78,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { t } = useLanguage()
   const [isDeletingImage, setIsDeletingImage] = useState(false)
-
+  const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t, language } = useLanguage()
   // Initialize preview URLs from initialData if available
   useEffect(() => {
     if (initialData) {
@@ -149,15 +149,37 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         },
   })
 
-  const handleImagesChange = (files: File[]) => {
-    console.log("Images changed:", files)
-    setSelectedImages(files)
-  }
-
-  const handleRemoveImage = async (index: number) => {
-    if (initialData?._id && initialData?.image && index < initialData.image.length) {
-      const imageToDelete = initialData.image[index]
-      await deleteExistingImage(imageToDelete._id)
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    
+    // Check if adding these files would exceed the limit of 3 images
+    if (selectedImages.length + files.length + previewUrls.length > 3) {
+      toast({
+        title: "تنبيه",
+        description: "يمكنك إضافة 3 صور كحد أقصى",
+        variant: "destructive",
+        duration: 3000,
+      })
+      return
+    }
+    
+    // Add new files to selectedImages array
+    const newFiles = Array.from(files)
+    setSelectedImages(prev => [...prev, ...newFiles])
+    
+    // Create preview URLs for new files
+    newFiles.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewUrls(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -189,6 +211,33 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       })
     } finally {
       setIsDeletingImage(false)
+      setImageToDelete(null)
+    }
+  }
+
+  const handleImageDelete = async () => {
+    if (!imageToDelete) return
+
+    if (imageToDelete.public_id) {
+      await deleteExistingImage(imageToDelete.public_id)
+    }
+    
+    setPreviewUrls(prev => prev.filter((_, i) => i !== imageToDelete.index))
+    if (!imageToDelete.public_id) {
+      const newSelectedImagesIndex = imageToDelete.index - (initialData?.image?.length || 0)
+      setSelectedImages(prev => prev.filter((_, i) => i !== newSelectedImagesIndex))
+    }
+  }
+
+  const removeImage = (index: number) => {
+    // If the image is from initialData (existing image)
+    if (initialData?.image && index < initialData.image.length) {
+      const imageToDelete = initialData.image[index]
+      setImageToDelete({ index, public_id: imageToDelete.public_id })
+    } 
+    // If the image is newly added
+    else {
+      setImageToDelete({ index })
     }
   }
 
@@ -201,10 +250,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       setIsLoading(true)
 
       // Check if we're creating a new news item and require at least one image
-      if (!initialData && selectedImages.length === 0) {
+      if (!initialData && previewUrls.length === 0) {
         toast({
-          title: t("error"),
-          description: t("image.required"),
+          title: "خطأ",
+          description: "يرجى اختيار صورة واحدة على الأقل للخبر",
           variant: "destructive",
           duration: 3000,
         })
@@ -213,10 +262,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       }
 
       // Check if total images exceed the limit of 3
-      if (selectedImages.length > 3) {
+      if (previewUrls.length > 3) {
         toast({
-          title: t("error"),
-          description: t("max.images.limit").replace('{0}', '3'),
+          title: "خطأ",
+          description: "يمكنك إضافة 3 صور كحد أقصى",
           variant: "destructive",
           duration: 3000,
         })
@@ -239,11 +288,9 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       })
       
       // Add all selected images to FormData
-      selectedImages.forEach((file) => {
-        formData.append('image', file)
+      selectedImages.forEach((file, index) => {
+        formData.append(`image`, file)
       })
-      
-      console.log("Submitting with images:", selectedImages.length)
       
       // Determine URL and method based on whether we're editing or creating
       const url = initialData?._id 
@@ -361,46 +408,32 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
           <FormField
             control={form.control}
             name="category"
-            render={({ field }) => {
-              // Create a ref to store the current value to avoid re-renders
-              const valueRef = useRef(field.value);
-              
-              // Use useEffect to update the ref and call onChange only when value changes
-              useEffect(() => {
-                valueRef.current = field.value;
-              }, [field.value]);
-              
-              return (
-                <FormItem>
-                  <FormLabel>{t("news.category")}</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value || ""}
-                    defaultValue={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("news.category.placeholder")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingCategories ? (
-                        <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
-                      ) : categories.length > 0 ? (
-                        categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
-                            {category.name.ar}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("news.category")}</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("news.category.placeholder")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingCategories ? (
+                      <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
+                    ) : categories.length > 0 ? (
+                      categories.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name[language]}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           />
 
           {/* Date Field */}
@@ -444,16 +477,75 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
               </FormItem>
             )}
           />
+
+          {/* Multiple Image Upload */}
+          <div className="col-span-1 md:col-span-2">
+            <FormLabel>{t("news.images")}</FormLabel>
+            <div className="mt-2 flex flex-col space-y-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                multiple
+                className="hidden"
+              />
+              
+              {/* Upload button - disabled if already have 4 images */}
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={triggerFileInput}
+                className="w-full h-16 border-dashed"
+                disabled={previewUrls.length >= 3}
+              >
+                {previewUrls.length > 0 
+                  ? `${t("add.image")} (${previewUrls.length}/3)` 
+                  : t("choose.image")}
+              </Button>
+              
+              {/* Image previews */}
+              {previewUrls.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {previewUrls.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <div className="relative w-full h-48 rounded-md overflow-hidden border">
+                        <img 
+                          src={url} 
+                          alt={`${t("preview")} ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full opacity-80 hover:opacity-100"
+                        onClick={() => removeImage(index)}
+                        disabled={isDeletingImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {!initialData && previewUrls.length === 0 && (
+                <p className="text-sm text-red-500">* {t("image.required")}</p>
+              )}
+            </div>  
+          </div>
         </div>
 
-        {/* Multiple Image Upload */}
-        <UploadMultipleImages
-          label={t("news.images")}
-          initialImages={initialData?.image || []}
-          maxImages={3}
-          onChange={handleImagesChange}
-          onRemove={handleRemoveImage}
-          imageRequired={!initialData} // Only required for new news items
+        <ConfirmDialog
+          isOpen={!!imageToDelete}
+          onClose={() => setImageToDelete(null)}
+          onConfirm={handleImageDelete}
+          title={t("confirm.delete.image.title")}
+          description={t("confirm.delete.image.description")}
+          confirmText={t("delete")}
+          cancelText={t("cancel")}
         />
 
         <div className="flex gap-4">
