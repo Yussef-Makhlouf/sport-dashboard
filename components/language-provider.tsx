@@ -88,6 +88,7 @@ const translations = {
     "edit.member": "تعديل العضو",
     "description": "الوصف",
     "position": "الموقع",
+    "Image":"الصورة",
 
     // Content
     "content.overview": "نظرة عامة على المحتوى",
@@ -406,7 +407,7 @@ const translations = {
     "edit.member": "Edit Member",
     "description": "Description",
     "position": "Position",
-
+"Image":"image",
     // Content
     "content.overview": "Content Overview",
     "recent.news": "Recent News",
