@@ -24,6 +24,26 @@ import { UploadMultipleImages } from "@/components/upload-multiple-images"
 import { showToast } from "@/lib/utils"
 import { ConfirmDialog } from "./ui/confirm-dialog"
  
+// Define form validation schema
+const formSchema = z.object({
+  title_ar: z.string().min(3, {
+    message: "يجب أن يكون العنوان 3 أحرف على الأقل.",
+  }),
+  title_en: z.string().min(3, {
+    message: "Title must be at least 3 characters.",
+  }),
+  content_ar: z.string().min(10, {
+    message: "يجب أن يكون المحتوى 10 أحرف على الأقل.",
+  }),
+  content_en: z.string().min(10, {
+    message: "Content must be at least 10 characters.",
+  }),
+  category: z.string().optional(),
+  date: z.date({
+    required_error: "Please select a date",
+  }),
+})
+
 interface Category {
   _id: string;
   name: {
@@ -53,7 +73,7 @@ interface NewsFormProps {
   }
 }
 
-export function NewsForm({ initialData = {} }: NewsFormProps) {
+export function NewsForm({ initialData }: NewsFormProps = {}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
@@ -63,7 +83,6 @@ export function NewsForm({ initialData = {} }: NewsFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t, language } = useLanguage()
   const [isDeletingImage, setIsDeletingImage] = useState(false)
-  const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
   
   // Define form validation schema
   const formSchema = z.object({
@@ -85,6 +104,7 @@ export function NewsForm({ initialData = {} }: NewsFormProps) {
     }),
   })
 
+  const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
   // Initialize preview URLs from initialData if available
   useEffect(() => {
     if (initialData) {
@@ -242,17 +262,19 @@ export function NewsForm({ initialData = {} }: NewsFormProps) {
       // Check if we're creating a new news item and require at least one image
       if (!initialData && selectedImages.length === 0) {
         showToast.error(t, "error", "image.required")
-        
-        if (!initialData && previewUrls.length === 0) {
-          toast({
-            title: "خطأ",
-            description: "يرجى اختيار صورة واحدة على الأقل للخبر",
-            variant: "destructive",
-            duration: 3000,
-          })
-          setIsLoading(false)
-          return
-        }
+        setIsLoading(false)
+        return
+      }
+
+      if (!initialData && previewUrls.length === 0) {
+        toast({
+          title: "خطأ",
+          description: "يرجى اختيار صورة واحدة على الأقل للخبر",
+          variant: "destructive",
+          duration: 3000,
+        })
+        setIsLoading(false)
+        return
       }
 
       // Check if total images exceed the limit of 3
