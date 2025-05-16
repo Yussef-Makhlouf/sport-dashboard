@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { showToast } from "@/lib/utils"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 // Define the type for member items from your API
 interface MemberItem {
@@ -61,6 +62,8 @@ export function MembersTable() {
   const [tableData, setTableData] = useState<MemberItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null)
   const { language, t } = useLanguage()
 
   // Fetch data on the client side only
@@ -145,21 +148,24 @@ export function MembersTable() {
     fetchMembers()
   }, [])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("Are you sure you want to delete this member?"))) {
-      return
-    }
+  const handleDelete = (id: string) => {
+    setItemToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return
     
     try {
-      console.log(`Attempting to delete member with ID: ${id}`)
+      console.log(`Attempting to delete member with ID: ${itemToDelete}`)
       
       // Try the primary endpoint first
       let response
       let deleteSuccessful = false
       
       try {
-        console.log(`Using primary endpoint: ${API_URL}/members/${id}`)
-        response = await fetch(`${API_URL}/members/${id}`, {
+        console.log(`Using primary endpoint: ${API_URL}/members/${itemToDelete}`)
+        response = await fetch(`${API_URL}/members/${itemToDelete}`, {
           method: 'DELETE',
         });
         
@@ -178,7 +184,7 @@ export function MembersTable() {
       // Try alternative endpoint if first one failed
       if (!deleteSuccessful) {
         try {
-          const alternativeEndpoint = `${API_URL}/members/delete/${id}`
+          const alternativeEndpoint = `${API_URL}/members/delete/${itemToDelete}`
           console.log(`Using alternative endpoint: ${alternativeEndpoint}`)
           
           response = await fetch(alternativeEndpoint, {
@@ -200,12 +206,15 @@ export function MembersTable() {
       }
       
       // Update the UI after successful deletion
-      setTableData(tableData.filter((item) => item._id !== id))
+      setTableData(tableData.filter((item) => item._id !== itemToDelete))
       
       showToast.success(t, "member.deleted", "member.deleted.description")
     } catch (err) {
       console.error("Error deleting member:", err)
       showToast.error(t, "error", "member.delete.error")
+    } finally {
+      setDeleteDialogOpen(false)
+      setItemToDelete(null)
     }
   }
 
@@ -454,6 +463,17 @@ export function MembersTable() {
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false)
+          setItemToDelete(null)
+        }}
+        onConfirm={confirmDelete}
+        title={t("confirm.delete.member.title")}
+        description={t("confirm.delete.member.description")}
+      />
     </div>
   )
 }

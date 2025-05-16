@@ -46,7 +46,6 @@ export const useUser = () => {
       }
 
       const data = await response.json();
-      console.log('User data response:', data);
       
       // Check if the response has the expected structure
       if (!data.user) {
