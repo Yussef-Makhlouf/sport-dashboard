@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { ar } from "date-fns/locale"
+import { ar, enUS } from "date-fns/locale"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -21,26 +21,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import { UploadMultipleImages } from "@/components/upload-multiple-images"
-
-// Define form validation schema
-const formSchema = z.object({
-  title_ar: z.string().min(3, {
-    message: "يجب أن يكون العنوان 3 أحرف على الأقل.",
-  }),
-  title_en: z.string().min(3, {
-    message: "Title must be at least 3 characters.",
-  }),
-  content_ar: z.string().min(10, {
-    message: "يجب أن يكون المحتوى 10 أحرف على الأقل.",
-  }),
-  content_en: z.string().min(10, {
-    message: "Content must be at least 10 characters.",
-  }),
-  category: z.string().optional(),
-  date: z.date({
-    required_error: "Please select a date",
-  }),
-})
+import { showToast } from "@/lib/utils"
 
 interface Category {
   _id: string;
@@ -79,8 +60,28 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [isDeletingImage, setIsDeletingImage] = useState(false)
+  
+  // Define form validation schema
+  const formSchema = z.object({
+    title_ar: z.string().min(3, {
+      message: t("title.ar.min.length.error") || "Arabic title must be at least 3 characters.",
+    }),
+    title_en: z.string().min(3, {
+      message: t("title.en.min.length.error") || "English title must be at least 3 characters.",
+    }),
+    content_ar: z.string().min(10, {
+      message: t("content.ar.min.length.error") || "Arabic content must be at least 10 characters.",
+    }),
+    content_en: z.string().min(10, {
+      message: t("content.en.min.length.error") || "English content must be at least 10 characters.",
+    }),
+    category: z.string().optional(),
+    date: z.date({
+      required_error: t("date.required") || "Please select a date",
+    }),
+  })
 
   // Initialize preview URLs from initialData if available
   useEffect(() => {
@@ -115,18 +116,14 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         }
       } catch (error) {
         console.error('Error fetching categories:', error)
-        toast({
-          title: "خطأ",
-          description: "فشل في تحميل الفئات",
-          variant: "destructive",
-        })
+        showToast.error(t, "error", "categories.load.error")
       } finally {
         setIsLoadingCategories(false)
       }
     }
 
     fetchCategories()
-  }, [])
+  }, [t])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -174,19 +171,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         throw new Error('Failed to delete image')
       }
 
-      toast({
-        title: t("success"),
-        description: t("image.deleted.success"),
-        duration: 3000,
-      })
+      showToast.success(t, "success", "image.deleted.success")
     } catch (error) {
       console.error("Error deleting image:", error)
-      toast({
-        title: t("error"),
-        description: t("image.deleted.error"),
-        variant: "destructive",
-        duration: 3000,
-      })
+      showToast.error(t, "error", "image.deleted.error")
     } finally {
       setIsDeletingImage(false)
     }
@@ -202,24 +190,14 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
 
       // Check if we're creating a new news item and require at least one image
       if (!initialData && selectedImages.length === 0) {
-        toast({
-          title: t("error"),
-          description: t("image.required"),
-          variant: "destructive",
-          duration: 3000,
-        })
+        showToast.error(t, "error", "image.required")
         setIsLoading(false)
         return
       }
 
       // Check if total images exceed the limit of 3
       if (selectedImages.length > 3) {
-        toast({
-          title: t("error"),
-          description: t("max.images.limit").replace('{0}', '3'),
-          variant: "destructive",
-          duration: 3000,
-        })
+        showToast.error(t, "error", "max.images.limit")
         setIsLoading(false)
         return
       }
@@ -263,23 +241,23 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         throw new Error(errorData.message || "Failed to save news")
       }
 
-      toast({
-        title: initialData ? t("update.news.success.title") : t("create.news.success.title"),
-        description: initialData ? t("update.news.success.description") : t("create.news.success.description"),
-        duration: 3000,
-      })
+      showToast.success(
+        t, 
+        initialData ? "update.news.success.title" : "create.news.success.title", 
+        initialData ? "update.news.success.description" : "create.news.success.description"
+      )
 
       // Redirect to news list
       router.push("/dashboard/news")
       router.refresh() // Refresh the page to show updated data
     } catch (error) {
       console.error("Error saving news:", error)
-      toast({
-        title: t("error"),
-        description: error instanceof Error ? error.message : t("news.save.error"),
-        variant: "destructive",
-        duration: 3000,
-      })
+      showToast.error(
+        t, 
+        "error", 
+        "news.save.error", 
+        error instanceof Error ? error.message : undefined
+      )
     } finally {
       setIsLoading(false)
     }
@@ -357,93 +335,96 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
-          {/* Category */}
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => {
-              // Create a ref to store the current value to avoid re-renders
-              const valueRef = useRef(field.value);
-              
-              // Use useEffect to update the ref and call onChange only when value changes
-              useEffect(() => {
-                valueRef.current = field.value;
-              }, [field.value]);
-              
-              return (
-                <FormItem>
-                  <FormLabel>{t("news.category")}</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value || ""}
-                    defaultValue={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("news.category.placeholder")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingCategories ? (
-                        <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
-                      ) : categories.length > 0 ? (
-                        categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
-                            {category.name.ar}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 col-span-1 md:col-span-2">
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => {
+                // Create a ref to store the current value to avoid re-renders
+                const valueRef = useRef(field.value);
+                
+                // Use useEffect to update the ref and call onChange only when value changes
+                useEffect(() => {
+                  valueRef.current = field.value;
+                }, [field.value]);
+                
+                return (
+                  <FormItem className="flex-1">
+                    <FormLabel>{t("news.category")}</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value || ""}
+                      defaultValue={field.value || ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder={t("news.category.placeholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isLoadingCategories ? (
+                          <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
+                        ) : categories.length > 0 ? (
+                          categories.map((category) => (
+                            <SelectItem key={category._id} value={category._id}>
+                              {language === "ar" ? category.name.ar : category.name.en}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+
+            {/* Date Field */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>{t("publication.date")}</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={`w-full h-10 pl-3 text-right font-normal ${
+                            !field.value && "text-muted-foreground"
+                          }`}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", { locale: language === "ar" ? ar : enUS })
+                          ) : (
+                            <span>{t("select.date")}</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        locale={language === "ar" ? ar : enUS}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
-              );
-            }}
-          />
-
-          {/* Date Field */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t("publication.date")}</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={`w-full pl-3 text-right font-normal ${
-                          !field.value && "text-muted-foreground"
-                        }`}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: ar })
-                        ) : (
-                          <span>{t("select.date")}</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              )}
+            />
+          </div>
         </div>
 
         {/* Multiple Image Upload */}

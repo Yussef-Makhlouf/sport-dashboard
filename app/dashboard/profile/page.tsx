@@ -6,6 +6,8 @@ import { useEffect, useState } from "react"
 import { useLanguage } from "@/components/language-provider"
 import { useRouter } from "next/navigation"
 import Cookies from 'js-cookie'
+import { showToast } from "@/lib/utils"
+import { handleApiError, handleProfileError } from "@/lib/error-helpers"
 
 interface UserData {
   _id: string
@@ -49,16 +51,19 @@ export default function ProfilePage() {
         }
 
         if (!userDataString) {
-          // If user data is not found, redirect to login
+          // If user data is not found, redirect to login and show a friendly message
           router.push('/login')
-          throw new Error('User data not found')
+          showToast.error(t, "unauthorized.title", "unauthorized.description")
+          return
         }
         
         let localUserData
         try {
           localUserData = JSON.parse(userDataString)
         } catch (e) {
-          throw new Error('Invalid user data format')
+          handleProfileError(t, e)
+          router.push('/login')
+          return
         }
         
         // Get token from cookie
@@ -69,7 +74,6 @@ export default function ProfilePage() {
         // If no userId from localStorage or cookies, try to get user info from token
         if (!userId && token) {
           try {
-            console.log('No user ID found, trying to get user info from token')
             const response = await fetch(`${API_URL}/auth/verify`, {
               headers: {
                 Authorization: `MMA ${token}`
@@ -78,29 +82,23 @@ export default function ProfilePage() {
             
             if (response.ok) {
               const userData = await response.json()
-              console.log('User data from token verification:', userData)
               if (userData.user && userData.user._id) {
                 userId = userData.user._id
-                console.log('Got user ID from token:', userId)
               }
             }
           } catch (error) {
-            console.error('Error getting user info from token:', error)
+            handleApiError(t, error)
           }
         }
 
         if (!userId) {
           // If user ID is not found, redirect to login
-          router.push('/login') 
-          throw new Error('User ID not found in user data')
+          router.push('/login')
+          showToast.error(t, "unauthorized.title", "unauthorized.description")
+          return
         }
-
-        // Debug log
-        console.log('Fetching user with ID:', userId)
-        console.log('Using token:', token ? 'Token exists' : 'No token')
         
         const apiEndpoint = `${API_URL}/auth/getUser/${userId}`
-        console.log('API endpoint:', apiEndpoint)
 
         try {
           // First try with the standard endpoint
@@ -112,13 +110,9 @@ export default function ProfilePage() {
             }
           })
           
-          console.log('API response status:', response.status)
-          
           // If the first endpoint fails with a 404, try an alternative format
           if (response.status === 404) {
-            console.log('First endpoint returned 404, trying alternative...')
             const alternativeEndpoint = `${API_URL}/auth/user/${userId}`
-            console.log('Alternative API endpoint:', alternativeEndpoint)
             
             response = await fetch(alternativeEndpoint, {
               cache: 'no-store',
@@ -127,12 +121,12 @@ export default function ProfilePage() {
                 Authorization: token ? `MMA ${token}` : ''
               }
             })
-            console.log('Alternative API response status:', response.status)
           }
           
           if (response.status === 401 || response.status === 403) {
             // Unauthorized - redirect to login
             router.push('/login')
+            showToast.error(t, "unauthorized.title", "unauthorized.description")
             return
           }
           
@@ -141,7 +135,6 @@ export default function ProfilePage() {
           }
           
           const data = await response.json()
-          console.log('API response data:', JSON.stringify(data).substring(0, 200))
           
           // Check if the response contains the user data in different formats
           let user = null
@@ -157,18 +150,18 @@ export default function ProfilePage() {
           }
           
           if (!user) {
-            console.error('User data structure in response:', data)
             throw new Error('User data not found in response')
           }
           
           setUserData(user)
           setError(null)
         } catch (fetchError) {
-          console.error('Fetch error:', fetchError)
+          handleApiError(t, fetchError, "profile.view.error", "connection.error")
           throw fetchError
         }
       } catch (error) {
         console.error('Error fetching user data:', error)
+        handleProfileError(t, error)
         setError(error instanceof Error ? error.message : String(error))
         setUserData(null)
       } finally {
@@ -192,7 +185,7 @@ export default function ProfilePage() {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{t("profile")}</h1>
-        <p className="text-red-500">{error || t("profile.not.found")}</p>
+        <p className="text-red-500">{t("profile.not.found")}</p>
       </div>
     )
   }

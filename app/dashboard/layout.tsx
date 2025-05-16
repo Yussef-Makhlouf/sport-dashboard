@@ -8,8 +8,8 @@ import { ProtectedRoute } from "@/components/protected-route"
 import { AuthWrapper } from "@/components/auth-wrapper"
 
 export const metadata: Metadata = {
-  title: "dashboard.title",
-  description: "dashboard.description",
+  title: "dashboard",
+  description: "dashboard",
 }
 
 export default function DashboardLayout({

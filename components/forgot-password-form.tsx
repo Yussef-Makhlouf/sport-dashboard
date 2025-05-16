@@ -22,9 +22,7 @@ export function ForgotPasswordForm() {
   // Form schema with dynamic language-based validation messages
   const formSchema = z.object({
     email: z.string().email({
-      message: language === "ar" 
-        ? "يرجى إدخال عنوان بريد إلكتروني صالح."
-        : "Please enter a valid email address.",
+      message: t("email.invalid.error") || "Please enter a valid email address.",
     }),
   })
 
