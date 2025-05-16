@@ -22,6 +22,27 @@ import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
 import { UploadMultipleImages } from "@/components/upload-multiple-images"
 import { showToast } from "@/lib/utils"
+import { ConfirmDialog } from "./ui/confirm-dialog"
+ 
+// Define form validation schema
+const formSchema = z.object({
+  title_ar: z.string().min(3, {
+    message: "يجب أن يكون العنوان 3 أحرف على الأقل.",
+  }),
+  title_en: z.string().min(3, {
+    message: "Title must be at least 3 characters.",
+  }),
+  content_ar: z.string().min(10, {
+    message: "يجب أن يكون المحتوى 10 أحرف على الأقل.",
+  }),
+  content_en: z.string().min(10, {
+    message: "Content must be at least 10 characters.",
+  }),
+  category: z.string().optional(),
+  date: z.date({
+    required_error: "Please select a date",
+  }),
+})
 
 interface Category {
   _id: string;
@@ -83,6 +104,9 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     }),
   })
 
+  const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t, language } = useLanguage()
   // Initialize preview URLs from initialData if available
   useEffect(() => {
     if (initialData) {
@@ -146,15 +170,37 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         },
   })
 
-  const handleImagesChange = (files: File[]) => {
-    console.log("Images changed:", files)
-    setSelectedImages(files)
-  }
-
-  const handleRemoveImage = async (index: number) => {
-    if (initialData?._id && initialData?.image && index < initialData.image.length) {
-      const imageToDelete = initialData.image[index]
-      await deleteExistingImage(imageToDelete._id)
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    
+    // Check if adding these files would exceed the limit of 3 images
+    if (selectedImages.length + files.length + previewUrls.length > 3) {
+      toast({
+        title: "تنبيه",
+        description: "يمكنك إضافة 3 صور كحد أقصى",
+        variant: "destructive",
+        duration: 3000,
+      })
+      return
+    }
+    
+    // Add new files to selectedImages array
+    const newFiles = Array.from(files)
+    setSelectedImages(prev => [...prev, ...newFiles])
+    
+    // Create preview URLs for new files
+    newFiles.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewUrls(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -177,6 +223,33 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       showToast.error(t, "error", "image.deleted.error")
     } finally {
       setIsDeletingImage(false)
+      setImageToDelete(null)
+    }
+  }
+
+  const handleImageDelete = async () => {
+    if (!imageToDelete) return
+
+    if (imageToDelete.public_id) {
+      await deleteExistingImage(imageToDelete.public_id)
+    }
+    
+    setPreviewUrls(prev => prev.filter((_, i) => i !== imageToDelete.index))
+    if (!imageToDelete.public_id) {
+      const newSelectedImagesIndex = imageToDelete.index - (initialData?.image?.length || 0)
+      setSelectedImages(prev => prev.filter((_, i) => i !== newSelectedImagesIndex))
+    }
+  }
+
+  const removeImage = (index: number) => {
+    // If the image is from initialData (existing image)
+    if (initialData?.image && index < initialData.image.length) {
+      const imageToDelete = initialData.image[index]
+      setImageToDelete({ index, public_id: imageToDelete.public_id })
+    } 
+    // If the image is newly added
+    else {
+      setImageToDelete({ index })
     }
   }
 
@@ -191,6 +264,13 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       // Check if we're creating a new news item and require at least one image
       if (!initialData && selectedImages.length === 0) {
         showToast.error(t, "error", "image.required")
+      if (!initialData && previewUrls.length === 0) {
+        toast({
+          title: "خطأ",
+          description: "يرجى اختيار صورة واحدة على الأقل للخبر",
+          variant: "destructive",
+          duration: 3000,
+        })
         setIsLoading(false)
         return
       }
@@ -217,11 +297,9 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       })
       
       // Add all selected images to FormData
-      selectedImages.forEach((file) => {
-        formData.append('image', file)
+      selectedImages.forEach((file, index) => {
+        formData.append(`image`, file)
       })
-      
-      console.log("Submitting with images:", selectedImages.length)
       
       // Determine URL and method based on whether we're editing or creating
       const url = initialData?._id 
@@ -427,14 +505,14 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
           </div>
         </div>
 
-        {/* Multiple Image Upload */}
-        <UploadMultipleImages
-          label={t("news.images")}
-          initialImages={initialData?.image || []}
-          maxImages={3}
-          onChange={handleImagesChange}
-          onRemove={handleRemoveImage}
-          imageRequired={!initialData} // Only required for new news items
+        <ConfirmDialog
+          isOpen={!!imageToDelete}
+          onClose={() => setImageToDelete(null)}
+          onConfirm={handleImageDelete}
+          title={t("confirm.delete.image.title")}
+          description={t("confirm.delete.image.description")}
+          confirmText={t("delete")}
+          cancelText={t("cancel")}
         />
 
         <div className="flex gap-4">
@@ -456,4 +534,4 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       </form>
     </Form>
   )
-}
+}}

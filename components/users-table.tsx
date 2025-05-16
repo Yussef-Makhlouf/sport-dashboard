@@ -101,7 +101,7 @@ export function UsersTable() {
     if (!itemToDelete) return
 
     try {
-      const response = await fetch(`${API_URL}/auth/delete/${itemToDelete}`, {
+      const response = await fetch(`${API_URL}/auth/${itemToDelete}`, {
         method: 'DELETE',
         headers: {
           Authorization: `MMA ${getAuthToken()}`,
@@ -109,15 +109,24 @@ export function UsersTable() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        const errorData = await response.json();
+        if (errorData.message === "UnAuthorized to access this api") {
+          throw new Error(t("unauthorized.error"));
+        }
+        throw new Error(errorData.message || t("user.delete.error.description"));
       }
-
+      
       // Only update the UI if the API call was successful
       setUsers(users.filter((item) => item._id !== itemToDelete));
       showToast.success(t, "user.delete.success.title", "user.delete.success.description");
     } catch (error) {
       console.error('Error deleting user:', error);
-      showToast.error(t, "user.delete.error.title", "user.delete.error.description");
+      const errorMessage = error instanceof Error ? error.message : t("user.delete.error.description");
+      toast({
+        title: t("user.delete.error.title"),
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setDeleteDialogOpen(false)
       setItemToDelete(null)

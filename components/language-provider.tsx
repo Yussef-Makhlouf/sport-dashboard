@@ -95,9 +95,8 @@ const translations = {
     "position.en":"المنصب بالانجليزي",
     "member.image":"ارفق صوره",
     "create.member":" أضف عضو",
-"drag.or.upload":"  اسحب او ارفع صوره ",
-"supported.formats":"يدعم صيغ الصور المختلفه",
-
+    "drag.or.upload":"  اسحب او ارفع صوره ",
+    "supported.formats":"يدعم صيغ الصور المختلفه",
 
     // Content
     "content.overview": "نظرة عامة على المحتوى",
@@ -118,8 +117,8 @@ const translations = {
     "news.content.en": "المحتوى (بالإنجليزية)",
     "news.content.ar.placeholder": "أدخل محتوى الخبر بالعربية",
     "news.content.en.placeholder": "أدخل محتوى الخبر بالإنجليزية",
-    "confirm.delete.news.title":"حذف العضو",
-    "confirm.delete.news.description":"هل أنت متأكد من رغبتك في حذف هذا العضو؟",
+    "confirm.delete.news.title":"حذف الخبر",
+    "confirm.delete.news.description":"هل أنت متأكد من رغبتك في حذف هذا الخبر؟",
     "confirm.delete.news.button":"حذف",
     "confirm.delete.news.cancel":"إلغاء",
 
@@ -159,7 +158,8 @@ const translations = {
     "edit.news.description": "تعديل مقال إخباري موجود",
     "news.not.found": "لم يتم العثور على المقال الإخباري",
     "news.not.found.error": "لم يتم العثور على المقال الإخباري. قد يكون تم حذفه أو تحريكه.",
-"news.per.page":"عدد الأخبار",
+    "news.per.page":"عدد الأخبار",
+    
     // Events
     "add.event": "إضافة فعالية",
     "create.event": "إنشاء فعالية جديدة",
@@ -216,8 +216,8 @@ const translations = {
     "user.not.found": "لم يتم العثور على المستخدم",
     "user.not.found.error": "لم يتم العثور على المستخدم. قد يكون تم حذفه أو تحريكه.",
     "phone.number": "رقم الهاتف",
-    "confirm.delete.user.title":"حذف العضو",
-    "confirm.delete.user.description":"هل أنت متأكد من رغبتك في حذف هذا العضو؟",
+    "confirm.delete.user.title":"حذف المستخدم",
+    "confirm.delete.user.description":"هل أنت متأكد من رغبتك في حذف هذا المستخدم؟",
     "confirm.delete.user.button":"حذف",
     "confirm.delete.user.cancel":"إلغاء",
     user: "المستخدم",
@@ -416,6 +416,7 @@ const translations = {
     "location.ar.min.length.error": "يجب أن يكون الموقع بالعربية 5 أحرف على الأقل.",
     "location.en.min.length.error": "يجب أن يكون الموقع بالإنجليزية 5 أحرف على الأقل.",
     "category.required": "يرجى اختيار تصنيف.",
+    "unauthorized.error": "غير مصرح لك بتنفيذ هذة العملية",
   },
   en: {
     // Auth
@@ -812,6 +813,7 @@ const translations = {
     "location.ar.min.length.error": "Arabic location must be at least 5 characters.",
     "location.en.min.length.error": "English location must be at least 5 characters.",
     "category.required": "Please select a category.",
+    "unauthorized.error": "You are not authorized to do this process",
   },
 }
 
