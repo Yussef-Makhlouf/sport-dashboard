@@ -346,13 +346,29 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="flex flex-col space-y-6">
+          {/* Title Fields - English first */}
+          {/* English Title */}
+          <FormField
+            control={form.control}
+            name="title_en"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel>{t("news.title.en")}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t("news.title.en.placeholder")} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Arabic Title */}
           <FormField
             control={form.control}
             name="title_ar"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>{t("news.title.ar")}</FormLabel>
                 <FormControl>
                   <Input placeholder={t("news.title.ar.placeholder")} {...field} />
@@ -362,15 +378,20 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
-          {/* English Title */}
+          {/* Content Fields - English first */}
+          {/* English Content */}
           <FormField
             control={form.control}
-            name="title_en"
+            name="content_en"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("news.title.en")}</FormLabel>
+              <FormItem className="w-full">
+                <FormLabel>{t("news.content.en")}</FormLabel>
                 <FormControl>
-                  <Input placeholder={t("news.title.en.placeholder")} {...field} />
+                  <Textarea 
+                    placeholder={t("news.content.en.placeholder")} 
+                    className="min-h-[150px]" 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -382,30 +403,11 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             control={form.control}
             name="content_ar"
             render={({ field }) => (
-              <FormItem className="col-span-1 md:col-span-2">
+              <FormItem className="w-full">
                 <FormLabel>{t("news.content.ar")}</FormLabel>
                 <FormControl>
                   <Textarea 
                     placeholder={t("news.content.ar.placeholder")} 
-                    className="min-h-[150px]" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* English Content */}
-          <FormField
-            control={form.control}
-            name="content_en"
-            render={({ field }) => (
-              <FormItem className="col-span-1 md:col-span-2">
-                <FormLabel>{t("news.content.en")}</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder={t("news.content.en.placeholder")} 
                     className="min-h-[150px]" 
                     {...field} 
                   />

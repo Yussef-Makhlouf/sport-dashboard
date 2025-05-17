@@ -154,7 +154,7 @@ export function NewsTable() {
     },
     {
       accessorKey: "title",
-      header: t("news.title.ar"),
+      header: language === "ar" ? t("news.title.ar") : "Title",
       cell: ({ row }) => {
         const news = row.original
         // Add null check for title
@@ -272,7 +272,7 @@ export function NewsTable() {
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className={language === "ar" ? "text-right" : "text-left"}>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
