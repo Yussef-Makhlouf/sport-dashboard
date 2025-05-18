@@ -29,6 +29,7 @@ import { getAuthToken } from "@/components/login-form"
 import Cookies from 'js-cookie'
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { showToast } from "@/lib/utils"
+import { fetchWithTokenRefresh } from "@/lib/utils"
 
 interface User {
   _id: string
@@ -48,18 +49,14 @@ export function UsersTable() {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${API_URL}/auth/getAll`, {
-          headers: {
-            Authorization: `MMA ${getAuthToken()}`,
-          },
-        })
+        const response = await fetchWithTokenRefresh(`${API_URL}/auth/getAll`)
         
         if (!response.ok) {
           throw new Error('Failed to fetch users')
@@ -101,15 +98,13 @@ export function UsersTable() {
     if (!itemToDelete) return
 
     try {
-      const response = await fetch(`${API_URL}/auth/${itemToDelete}`, {
+      const response = await fetchWithTokenRefresh(`${API_URL}/auth/${itemToDelete}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `MMA ${getAuthToken()}`,
-        },
       });
-
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5uYWRlci5uYWJpbGwuNjVAZ21haWwuY29tIiwiX2lkIjoiNjgxZjlmOTBhZjI0NmNjMTNhMWIyODFjIiwiaWF0IjoxNzQ3NTc3NTgxLCJleHAiOjE3NDc1ODExODF9.kCRyTMkoyBGbdwGgspePoXuWn0un_CYZi3xcbVUSoCY
       if (!response.ok) {
         const errorData = await response.json();
+        
         if (errorData.message === "UnAuthorized to access this api") {
           throw new Error(t("unauthorized.error"));
         }
@@ -135,14 +130,13 @@ export function UsersTable() {
 
   const getSingleUser = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/getUser/${id}`);
+      const response = await fetchWithTokenRefresh(`${API_URL}/auth/getUser/${id}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch user');
       }
 
       const data = await response.json();
-      console.log(data);
       return data;
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -163,7 +157,7 @@ export function UsersTable() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "avatar",
-      header: t("user"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("user")}</div>,
       cell: ({ row }) => {
         const user = row.original
         console.log(user);
@@ -184,14 +178,14 @@ export function UsersTable() {
     },
     {
       accessorKey: "phoneNumber",
-      header: t("phone.number"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("phone.number")}</div>,
       cell: ({ row }) => {
         return <div>{row.original.phoneNumber}</div>
       },
     },
     {
       accessorKey: "role",
-      header: t("role"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("role")}</div>,
       cell: ({ row }) => {
         const role = row.getValue("role") as string
         return (
@@ -203,7 +197,7 @@ export function UsersTable() {
     },
     {
       accessorKey: "isActive",
-      header: t("status"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("status")}</div>,
       cell: ({ row }) => {
         const isActive = row.original.isActive
         return (
@@ -215,29 +209,31 @@ export function UsersTable() {
     },
     {
       id: "actions",
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("actions")}</div>,
       cell: ({ row }) => {
         const user = row.original
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">{t("open.menu")}</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleEdit(user._id)}>
-                <Edit className="ml-2 h-4 w-4" />
-                {t("edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(user._id)}>
-                <Trash className="ml-2 h-4 w-4" />
-                {t("delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className={language === 'ar' ? 'text-right' : 'text-left'}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">{t("open.menu")}</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align={language === 'ar' ? 'start' : 'end'}>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleEdit(user._id)}>
+                  <Edit className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                  {t("edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDelete(user._id)}>
+                  <Trash className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                  {t("delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )
       },
     },
