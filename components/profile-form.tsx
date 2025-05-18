@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -20,7 +20,17 @@ const profileSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   phoneNumber: z.string().min(0,{ message: "Invalid phone number" }),
   role: z.string(),
-})
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  if (data.password || data.confirmPassword) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 type ProfileFormValues = z.infer<typeof profileSchema>
 
@@ -42,6 +52,8 @@ export function ProfileForm() {
       email: userData?.email || "",
       phoneNumber: userData?.phoneNumber || "",
       role: userData?.role || "",
+      password: "",
+      confirmPassword: "",
     },
   })
 
@@ -49,9 +61,20 @@ export function ProfileForm() {
     const file = e.target.files?.[0]
     if (file) {
       setSelectedImage(file)
-      setPreviewUrl(URL.createObjectURL(file))
+      // Create a URL for the selected image
+      const imageUrl = URL.createObjectURL(file)
+      setPreviewUrl(imageUrl)
     }
   }
+
+  // Clean up the object URL when component unmounts or when previewUrl changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true)
@@ -63,6 +86,9 @@ export function ProfileForm() {
       formData.append("role", data.role)
       if (selectedImage) {
         formData.append("image", selectedImage)
+      }
+      if (data.password) {
+        formData.append("password", data.password)
       }
 
       const response = await fetch(`${API_URL}/auth/updateProfile/${userData._id}`, {
@@ -164,6 +190,36 @@ export function ProfileForm() {
               className="bg-muted cursor-not-allowed"
             />
           </div>
+
+          {userData?.role === "مدير" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password">{t("password")}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  {...form.register("password")}
+                  placeholder={t("password")}
+                />
+                {form.formState.errors.password && (
+                  <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t("confirm.password")}</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...form.register("confirmPassword")}
+                  placeholder={t("confirm.password")}
+                />
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

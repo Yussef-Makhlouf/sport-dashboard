@@ -29,6 +29,7 @@ import { getAuthToken } from "@/components/login-form"
 import Cookies from 'js-cookie'
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { showToast } from "@/lib/utils"
+import { fetchWithTokenRefresh } from "@/lib/utils"
 
 interface User {
   _id: string
@@ -55,11 +56,7 @@ export function UsersTable() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${API_URL}/auth/getAll`, {
-          headers: {
-            Authorization: `MMA ${getAuthToken()}`,
-          },
-        })
+        const response = await fetchWithTokenRefresh(`${API_URL}/auth/getAll`)
         
         if (!response.ok) {
           throw new Error('Failed to fetch users')
@@ -101,15 +98,13 @@ export function UsersTable() {
     if (!itemToDelete) return
 
     try {
-      const response = await fetch(`${API_URL}/auth/${itemToDelete}`, {
+      const response = await fetchWithTokenRefresh(`${API_URL}/auth/${itemToDelete}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `MMA ${getAuthToken()}`,
-        },
       });
-
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5uYWRlci5uYWJpbGwuNjVAZ21haWwuY29tIiwiX2lkIjoiNjgxZjlmOTBhZjI0NmNjMTNhMWIyODFjIiwiaWF0IjoxNzQ3NTc3NTgxLCJleHAiOjE3NDc1ODExODF9.kCRyTMkoyBGbdwGgspePoXuWn0un_CYZi3xcbVUSoCY
       if (!response.ok) {
         const errorData = await response.json();
+        
         if (errorData.message === "UnAuthorized to access this api") {
           throw new Error(t("unauthorized.error"));
         }
@@ -135,14 +130,13 @@ export function UsersTable() {
 
   const getSingleUser = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/getUser/${id}`);
+      const response = await fetchWithTokenRefresh(`${API_URL}/auth/getUser/${id}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch user');
       }
 
       const data = await response.json();
-      console.log(data);
       return data;
     } catch (error) {
       console.error('Error fetching user:', error);
