@@ -14,6 +14,7 @@ import { getAuthToken } from "@/components/login-form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { showToast } from "@/lib/utils"
 import Cookies from 'js-cookie'
+import { UploadImage } from "@/components/upload-image"
 
 const profileSchema = z.object({
   userName: z.string().min(3, { message: "Name must be at least 3 characters" }),
@@ -52,10 +53,9 @@ export function ProfileForm() {
     },
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleImageChange = (file: File | null) => {
+    setSelectedImage(file)
     if (file) {
-      setSelectedImage(file)
       setPreviewUrl(URL.createObjectURL(file))
     }
   }
@@ -107,22 +107,11 @@ export function ProfileForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={previewUrl || userData?.image?.secure_url} alt={userData?.userName} />
-            <AvatarFallback>{userData?.userName?.substring(0, 2)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <Label htmlFor="image">{t("profile.image")}</Label>
-            <Input
-              id="image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="mt-2"
-            />
-          </div>
-        </div>
+        <UploadImage
+          label={t("profile.image")}
+          initialImage={userData?.image?.secure_url}
+          onChange={handleImageChange}
+        />
 
         <div className="grid gap-4">
           <div className="space-y-2">

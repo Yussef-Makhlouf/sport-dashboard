@@ -77,49 +77,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
-  const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const { t, language } = useLanguage()
-  const [isDeletingImage, setIsDeletingImage] = useState(false)
-  
-  // Define form validation schema
-  const formSchema = z.object({
-    title_ar: z.string().min(3, {
-      message: t("title.ar.min.length.error") || "Arabic title must be at least 3 characters.",
-    }),
-    title_en: z.string().min(3, {
-      message: t("title.en.min.length.error") || "English title must be at least 3 characters.",
-    }),
-    content_ar: z.string().min(10, {
-      message: t("content.ar.min.length.error") || "Arabic content must be at least 10 characters.",
-    }),
-    content_en: z.string().min(10, {
-      message: t("content.en.min.length.error") || "English content must be at least 10 characters.",
-    }),
-    category: z.string().optional(),
-    date: z.date({
-      required_error: t("date.required") || "Please select a date",
-    }),
-  })
-
   const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
-  // Initialize preview URLs from initialData if available
-  useEffect(() => {
-    if (initialData) {
-      const initialImages: string[] = []
-      
-      // Add all images from the image array if they exist
-      if (initialData.image && Array.isArray(initialData.image)) {
-        initialData.image.forEach(img => {
-          if (img.secure_url) initialImages.push(img.secure_url)
-        })
-      }
-      
-      setPreviewUrls(initialImages)
-    }
-  }, [initialData])
 
   // Fetch categories when component mounts
   useEffect(() => {
@@ -168,91 +129,30 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         },
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    
-    // Check if adding these files would exceed the limit of 3 images
-    if (selectedImages.length + files.length + previewUrls.length > 3) {
-      toast({
-        title: "تنبيه",
-        description: "يمكنك إضافة 3 صور كحد أقصى",
-        variant: "destructive",
-        duration: 3000,
-      })
-      return
-    }
-    
-    // Add new files to selectedImages array
-    const newFiles = Array.from(files)
-    setSelectedImages(prev => [...prev, ...newFiles])
-    
-    // Create preview URLs for new files
-    newFiles.forEach(file => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrls(prev => [...prev, reader.result as string])
+  const handleImagesChange = (files: File[]) => {
+    setSelectedImages(files)
+  }
+
+  const handleImageRemove = async (index: number) => {
+    if (!initialData?.image) return
+
+    const imageToDelete = initialData.image[index]
+    if (imageToDelete) {
+      try {
+        const response = await fetch(`${API_URL}/news/deleteNewsImage/${initialData._id}/${imageToDelete.public_id}`, {
+          method: 'DELETE',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to delete image')
+        }
+
+        showToast.success(t, "success", "image.deleted.success")
+      } catch (error) {
+        console.error("Error deleting image:", error)
+        showToast.error(t, "error", "image.deleted.error")
       }
-      reader.readAsDataURL(file)
-    })
-    
-    // Reset the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
     }
-  }
-
-  const deleteExistingImage = async (imageId: string) => {
-    if (!initialData?._id) return
-    
-    try {
-      setIsDeletingImage(true)
-      const response = await fetch(`${API_URL}/news/deleteNewsImage/${initialData._id}/${imageId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete image')
-      }
-
-      showToast.success(t, "success", "image.deleted.success")
-    } catch (error) {
-      console.error("Error deleting image:", error)
-      showToast.error(t, "error", "image.deleted.error")
-    } finally {
-      setIsDeletingImage(false)
-      setImageToDelete(null)
-    }
-  }
-
-  const handleImageDelete = async () => {
-    if (!imageToDelete) return
-
-    if (imageToDelete.public_id) {
-      await deleteExistingImage(imageToDelete.public_id)
-    }
-    
-    setPreviewUrls(prev => prev.filter((_, i) => i !== imageToDelete.index))
-    if (!imageToDelete.public_id) {
-      const newSelectedImagesIndex = imageToDelete.index - (initialData?.image?.length || 0)
-      setSelectedImages(prev => prev.filter((_, i) => i !== newSelectedImagesIndex))
-    }
-  }
-
-  const removeImage = (index: number) => {
-    // If the image is from initialData (existing image)
-    if (initialData?.image && index < initialData.image.length) {
-      const imageToDelete = initialData.image[index]
-      setImageToDelete({ index, public_id: imageToDelete.public_id })
-    } 
-    // If the image is newly added
-    else {
-      setImageToDelete({ index })
-    }
-  }
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click()
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -262,24 +162,6 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       // Check if we're creating a new news item and require at least one image
       if (!initialData && selectedImages.length === 0) {
         showToast.error(t, "error", "image.required")
-        setIsLoading(false)
-        return
-      }
-
-      if (!initialData && previewUrls.length === 0) {
-        toast({
-          title: "خطأ",
-          description: "يرجى اختيار صورة واحدة على الأقل للخبر",
-          variant: "destructive",
-          duration: 3000,
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // Check if total images exceed the limit of 3
-      if (selectedImages.length > 3) {
-        showToast.error(t, "error", "max.images.limit")
         setIsLoading(false)
         return
       }
@@ -299,7 +181,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       })
       
       // Add all selected images to FormData
-      selectedImages.forEach((file, index) => {
+      selectedImages.forEach((file) => {
         formData.append(`image`, file)
       })
       
@@ -417,71 +299,57 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 col-span-1 md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Category */}
             <FormField
               control={form.control}
               name="category"
-              render={({ field }) => {
-                // Create a ref to store the current value to avoid re-renders
-                const valueRef = useRef(field.value);
-                
-                // Use useEffect to update the ref and call onChange only when value changes
-                useEffect(() => {
-                  valueRef.current = field.value;
-                }, [field.value]);
-                
-                return (
-                  <FormItem className="flex-1">
-                    <FormLabel>{t("news.category")}</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value || ""}
-                      defaultValue={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder={t("news.category.placeholder")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isLoadingCategories ? (
-                          <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
-                        ) : categories.length > 0 ? (
-                          categories.map((category) => (
-                            <SelectItem key={category._id} value={category._id}>
-                              {language === "ar" ? category.name.ar : category.name.en}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("news.category")}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isLoadingCategories}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("news.category.placeholder")} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name[language]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
-            {/* Date Field */}
+            {/* Date */}
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="flex-1">
+                <FormItem>
                   <FormLabel>{t("publication.date")}</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
-                          className={`w-full h-10 pl-3 text-right font-normal ${
+                          className={`w-full pl-3 text-left font-normal ${
                             !field.value && "text-muted-foreground"
                           }`}
                         >
                           {field.value ? (
-                            format(field.value, "PPP", { locale: language === "ar" ? ar : enUS })
+                            format(field.value, "PPP", {
+                              locale: language === "ar" ? ar : enUS,
+                            })
                           ) : (
                             <span>{t("select.date")}</span>
                           )}
@@ -497,7 +365,6 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
-                        locale={language === "ar" ? ar : enUS}
                         initialFocus
                       />
                     </PopoverContent>
@@ -507,17 +374,17 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
               )}
             />
           </div>
-        </div>
 
-        <ConfirmDialog
-          isOpen={!!imageToDelete}
-          onClose={() => setImageToDelete(null)}
-          onConfirm={handleImageDelete}
-          title={t("confirm.delete.image.title")}
-          description={t("confirm.delete.image.description")}
-          confirmText={t("delete")}
-          cancelText={t("cancel")}
-        />
+          {/* Image Upload */}
+          <UploadMultipleImages
+            label={t("news.images")}
+            initialImages={initialData?.image || []}
+            onChange={handleImagesChange}
+            onRemove={handleImageRemove}
+            imageRequired={!initialData}
+            maxImages={3}
+          />
+        </div>
 
         <div className="flex gap-4">
           <Button 
