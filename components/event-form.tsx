@@ -24,39 +24,6 @@ import { cn } from "@/lib/utils"
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 
-const formSchema = z.object({
-  title_ar: z.string().min(5, {
-    message: "يجب أن يكون العنوان 5 أحرف على الأقل.",
-  }),
-  title_en: z.string().min(5, {
-    message: "Title must be at least 5 characters.",
-  }),
-  content_ar: z.string().min(10, {
-    message: "يجب أن يكون المحتوى 10 أحرف على الأقل.",
-  }),
-  content_en: z.string().min(10, {
-    message: "Content must be at least 10 characters.",
-  }),
-  date: z.date({
-    required_error: "تاريخ الفعالية مطلوب.",
-  }),
-  time: z.string().min(1, {
-    message: "وقت الفعالية مطلوب.",
-  }),
-  location_ar: z.string().min(5, {
-    message: "يجب أن يكون الموقع 5 أحرف على الأقل.",
-  }),
-  location_en: z.string().min(5, {
-    message: "Location must be at least 5 characters.",
-  }),
-  type: z.enum(["upcoming", "past"]),
-  category: z.string().min(1, {
-    message: "يرجى اختيار تصنيف.",
-  }),
-  featured: z.boolean().default(false),
-  image: z.string().optional(),
-})
-
 interface EventFormProps {
   initialData?: {
     id?: string
@@ -81,6 +48,39 @@ export function EventForm({ initialData }: EventFormProps = {}) {
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image || null)
   const { t, language, dir } = useLanguage()
   const [activeTab, setActiveTab] = useState<"ar" | "en">(language)
+
+  const formSchema = z.object({
+    title_ar: z.string().min(5, {
+      message: t("title.ar.min.length.error") || "Arabic title must be at least 5 characters.",
+    }),
+    title_en: z.string().min(5, {
+      message: t("title.en.min.length.error") || "English title must be at least 5 characters.",
+    }),
+    content_ar: z.string().min(10, {
+      message: t("content.ar.min.length.error") || "Arabic content must be at least 10 characters.",
+    }),
+    content_en: z.string().min(10, {
+      message: t("content.en.min.length.error") || "English content must be at least 10 characters.",
+    }),
+    date: z.date({
+      required_error: t("date.required") || "Event date is required.",
+    }),
+    time: z.string().min(1, {
+      message: t("time.required") || "Event time is required.",
+    }),
+    location_ar: z.string().min(5, {
+      message: t("location.ar.min.length.error") || "Arabic location must be at least 5 characters.",
+    }),
+    location_en: z.string().min(5, {
+      message: t("location.en.min.length.error") || "English location must be at least 5 characters.",
+    }),
+    type: z.enum(["upcoming", "past"]),
+    category: z.string().min(1, {
+      message: t("category.required") || "Please select a category.",
+    }),
+    featured: z.boolean().default(false),
+    image: z.string().optional(),
+  })
 
   // Update active tab when language changes
   useEffect(() => {

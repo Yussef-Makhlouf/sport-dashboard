@@ -49,7 +49,7 @@ export function UsersTable() {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
 
@@ -157,7 +157,7 @@ export function UsersTable() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "avatar",
-      header: t("user"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("user")}</div>,
       cell: ({ row }) => {
         const user = row.original
         console.log(user);
@@ -178,14 +178,14 @@ export function UsersTable() {
     },
     {
       accessorKey: "phoneNumber",
-      header: t("phone.number"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("phone.number")}</div>,
       cell: ({ row }) => {
         return <div>{row.original.phoneNumber}</div>
       },
     },
     {
       accessorKey: "role",
-      header: t("role"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("role")}</div>,
       cell: ({ row }) => {
         const role = row.getValue("role") as string
         return (
@@ -197,7 +197,7 @@ export function UsersTable() {
     },
     {
       accessorKey: "isActive",
-      header: t("status"),
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("status")}</div>,
       cell: ({ row }) => {
         const isActive = row.original.isActive
         return (
@@ -209,29 +209,31 @@ export function UsersTable() {
     },
     {
       id: "actions",
+      header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("actions")}</div>,
       cell: ({ row }) => {
         const user = row.original
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">{t("open.menu")}</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleEdit(user._id)}>
-                <Edit className="ml-2 h-4 w-4" />
-                {t("edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(user._id)}>
-                <Trash className="ml-2 h-4 w-4" />
-                {t("delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className={language === 'ar' ? 'text-right' : 'text-left'}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">{t("open.menu")}</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align={language === 'ar' ? 'start' : 'end'}>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleEdit(user._id)}>
+                  <Edit className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                  {t("edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDelete(user._id)}>
+                  <Trash className={`${language === 'ar' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                  {t("delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )
       },
     },

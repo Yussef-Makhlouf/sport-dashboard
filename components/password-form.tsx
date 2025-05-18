@@ -20,23 +20,17 @@ export function PasswordForm() {
   const formSchema = z
     .object({
       currentPassword: z.string().min(8, {
-        message: language === "ar" 
-          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
-          : "Password must be at least 8 characters.",
+        message: t("current.password.min.length.error") || "Current password must be at least 8 characters.",
       }),
       newPassword: z.string().min(8, {
-        message: language === "ar" 
-          ? "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل."
-          : "New password must be at least 8 characters.",
+        message: t("new.password.min.length.error") || "New password must be at least 8 characters.",
       }),
       confirmPassword: z.string().min(8, {
-        message: language === "ar" 
-          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
-          : "Password must be at least 8 characters.",
+        message: t("password.min.length.error") || "Password must be at least 8 characters.",
       }),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
-      message: language === "ar" ? "كلمات المرور غير متطابقة." : "Passwords do not match.",
+      message: t("passwords.not.matching.error") || "Passwords do not match.",
       path: ["confirmPassword"],
     })
 

@@ -109,7 +109,7 @@ const translations = {
     "add.news": "إضافة خبر",
     "create.news": "إنشاء خبر جديد",
     "edit.news": "تعديل الخبر",
-    "news.title.ar": "عنوان الخبر",
+    "news.title.ar": "العنوان (بالعربية)",
     "news.title.en": "العنوان (بالإنجليزية)",
     "news.title.ar.placeholder": "أدخل عنوان الخبر بالعربية",
     "news.title.en.placeholder": "أدخل عنوان الخبر بالإنجليزية",
@@ -398,6 +398,7 @@ const translations = {
     "event.deleted": "تم حذف الفعالية",
     "event.deleted.description": "تم حذف الفعالية بنجاح",
     "member.deleted": "تم حذف العضو",
+  
     "member.deleted.description": "تم حذف العضو بنجاح",
     "member.delete.error": "فشل حذف العضو. يرجى المحاولة مرة أخرى",
     "profile.view.error": "فشل عرض الملف الشخصي. يرجى المحاولة مرة أخرى",
@@ -408,6 +409,16 @@ const translations = {
     "image.delete.error": "حدث خطأ أثناء حذف الصورة",
     "user.delete.error.title": "فشل حذف المستخدم",
     "user.delete.error.description": "فشل حذف المستخدم. يرجى المحاولة مرة أخرى",
+
+    // Form validations - Arabic
+    "verification.code.min.length.error": "يجب أن يكون رمز التحقق 6 أرقام على الأقل.",
+    "current.password.min.length.error": "يجب أن تكون كلمة المرور الحالية 8 أحرف على الأقل.",
+    "new.password.min.length.error": "يجب أن تكون كلمة المرور الجديدة 8 أحرف على الأقل.",
+    "date.required": "التاريخ مطلوب.",
+    "time.required": "الوقت مطلوب.",
+    "location.ar.min.length.error": "يجب أن يكون الموقع بالعربية 5 أحرف على الأقل.",
+    "location.en.min.length.error": "يجب أن يكون الموقع بالإنجليزية 5 أحرف على الأقل.",
+    "category.required": "يرجى اختيار تصنيف.",
     "unauthorized.error": "غير مصرح لك بتنفيذ هذة العملية",
   },
   en: {
@@ -509,7 +520,7 @@ const translations = {
     "news.content.ar.placeholder": "Enter news content in Arabic",
     "news.content.en.placeholder": "Enter news content in English",
     content: "Content",
-    "publication.date": "publish Date",
+    "publication.date": "Publish Date",
     "select.date": "Select date",
     image: "Image",
     "news.images": "News Images (Max 3 images)",
@@ -798,6 +809,16 @@ const translations = {
     "image.delete.error": "Error deleting image",
     "user.delete.error.title": "User Delete Failed",
     "user.delete.error.description": "Failed to delete user. Please try again",
+
+    // Form validations - English
+    "verification.code.min.length.error": "Verification code must be at least 6 digits.",
+    "current.password.min.length.error": "Current password must be at least 8 characters.",
+    "new.password.min.length.error": "New password must be at least 8 characters.",
+    "date.required": "Date is required.",
+    "time.required": "Time is required.",
+    "location.ar.min.length.error": "Arabic location must be at least 5 characters.",
+    "location.en.min.length.error": "English location must be at least 5 characters.",
+    "category.required": "Please select a category.",
     "unauthorized.error": "You are not authorized to do this process",
   },
 }

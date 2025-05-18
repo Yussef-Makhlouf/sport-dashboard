@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { ar } from "date-fns/locale"
+import { ar, enUS } from "date-fns/locale"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/components/language-provider"
 import { API_URL } from "@/lib/constants"
+import { UploadMultipleImages } from "@/components/upload-multiple-images"
+import { showToast } from "@/lib/utils"
 import { ConfirmDialog } from "./ui/confirm-dialog"
  
 // Define form validation schema
@@ -75,28 +77,10 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
-  const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-  const [isDeletingImage, setIsDeletingImage] = useState(false)
-  const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const { t, language } = useLanguage()
-  // Initialize preview URLs from initialData if available
-  useEffect(() => {
-    if (initialData) {
-      const initialImages: string[] = []
-      
-      // Add all images from the image array if they exist
-      if (initialData.image && Array.isArray(initialData.image)) {
-        initialData.image.forEach(img => {
-          if (img.secure_url) initialImages.push(img.secure_url)
-        })
-      }
-      
-      setPreviewUrls(initialImages)
-    }
-  }, [initialData])
+  const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
 
   // Fetch categories when component mounts
   useEffect(() => {
@@ -115,18 +99,14 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         }
       } catch (error) {
         console.error('Error fetching categories:', error)
-        toast({
-          title: "خطأ",
-          description: "فشل في تحميل الفئات",
-          variant: "destructive",
-        })
+        showToast.error(t, "error", "categories.load.error")
       } finally {
         setIsLoadingCategories(false)
       }
     }
 
     fetchCategories()
-  }, [])
+  }, [t])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -149,100 +129,30 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         },
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    
-    // Check if adding these files would exceed the limit of 3 images
-    if (selectedImages.length + files.length + previewUrls.length > 3) {
-      toast({
-        title: "تنبيه",
-        description: "يمكنك إضافة 3 صور كحد أقصى",
-        variant: "destructive",
-        duration: 3000,
-      })
-      return
-    }
-    
-    // Add new files to selectedImages array
-    const newFiles = Array.from(files)
-    setSelectedImages(prev => [...prev, ...newFiles])
-    
-    // Create preview URLs for new files
-    newFiles.forEach(file => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrls(prev => [...prev, reader.result as string])
+  const handleImagesChange = (files: File[]) => {
+    setSelectedImages(files)
+  }
+
+  const handleImageRemove = async (index: number) => {
+    if (!initialData?.image) return
+
+    const imageToDelete = initialData.image[index]
+    if (imageToDelete) {
+      try {
+        const response = await fetch(`${API_URL}/news/deleteNewsImage/${initialData._id}/${imageToDelete.public_id}`, {
+          method: 'DELETE',
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to delete image')
+        }
+
+        showToast.success(t, "success", "image.deleted.success")
+      } catch (error) {
+        console.error("Error deleting image:", error)
+        showToast.error(t, "error", "image.deleted.error")
       }
-      reader.readAsDataURL(file)
-    })
-    
-    // Reset the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
     }
-  }
-
-  const deleteExistingImage = async (imageId: string) => {
-    if (!initialData?._id) return
-    
-    try {
-      setIsDeletingImage(true)
-      const response = await fetch(`${API_URL}/news/deleteNewsImage/${initialData._id}/${imageId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete image')
-      }
-
-      toast({
-        title: t("success"),
-        description: t("image.deleted.success"),
-        duration: 3000,
-      })
-    } catch (error) {
-      console.error("Error deleting image:", error)
-      toast({
-        title: t("error"),
-        description: t("image.deleted.error"),
-        variant: "destructive",
-        duration: 3000,
-      })
-    } finally {
-      setIsDeletingImage(false)
-      setImageToDelete(null)
-    }
-  }
-
-  const handleImageDelete = async () => {
-    if (!imageToDelete) return
-
-    if (imageToDelete.public_id) {
-      await deleteExistingImage(imageToDelete.public_id)
-    }
-    
-    setPreviewUrls(prev => prev.filter((_, i) => i !== imageToDelete.index))
-    if (!imageToDelete.public_id) {
-      const newSelectedImagesIndex = imageToDelete.index - (initialData?.image?.length || 0)
-      setSelectedImages(prev => prev.filter((_, i) => i !== newSelectedImagesIndex))
-    }
-  }
-
-  const removeImage = (index: number) => {
-    // If the image is from initialData (existing image)
-    if (initialData?.image && index < initialData.image.length) {
-      const imageToDelete = initialData.image[index]
-      setImageToDelete({ index, public_id: imageToDelete.public_id })
-    } 
-    // If the image is newly added
-    else {
-      setImageToDelete({ index })
-    }
-  }
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click()
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -250,25 +160,8 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       setIsLoading(true)
 
       // Check if we're creating a new news item and require at least one image
-      if (!initialData && previewUrls.length === 0) {
-        toast({
-          title: "خطأ",
-          description: "يرجى اختيار صورة واحدة على الأقل للخبر",
-          variant: "destructive",
-          duration: 3000,
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // Check if total images exceed the limit of 3
-      if (previewUrls.length > 3) {
-        toast({
-          title: "خطأ",
-          description: "يمكنك إضافة 3 صور كحد أقصى",
-          variant: "destructive",
-          duration: 3000,
-        })
+      if (!initialData && selectedImages.length === 0) {
+        showToast.error(t, "error", "image.required")
         setIsLoading(false)
         return
       }
@@ -288,7 +181,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
       })
       
       // Add all selected images to FormData
-      selectedImages.forEach((file, index) => {
+      selectedImages.forEach((file) => {
         formData.append(`image`, file)
       })
       
@@ -310,23 +203,23 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
         throw new Error(errorData.message || "Failed to save news")
       }
 
-      toast({
-        title: initialData ? t("update.news.success.title") : t("create.news.success.title"),
-        description: initialData ? t("update.news.success.description") : t("create.news.success.description"),
-        duration: 3000,
-      })
+      showToast.success(
+        t, 
+        initialData ? "update.news.success.title" : "create.news.success.title", 
+        initialData ? "update.news.success.description" : "create.news.success.description"
+      )
 
       // Redirect to news list
       router.push("/dashboard/news")
       router.refresh() // Refresh the page to show updated data
     } catch (error) {
       console.error("Error saving news:", error)
-      toast({
-        title: t("error"),
-        description: error instanceof Error ? error.message : t("news.save.error"),
-        variant: "destructive",
-        duration: 3000,
-      })
+      showToast.error(
+        t, 
+        "error", 
+        "news.save.error", 
+        error instanceof Error ? error.message : undefined
+      )
     } finally {
       setIsLoading(false)
     }
@@ -335,28 +228,14 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Arabic Title */}
-          <FormField
-            control={form.control}
-            name="title_ar"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("news.title.ar")}</FormLabel>
-                <FormControl>
-                  <Input placeholder={t("news.title.ar.placeholder")} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        <div className="flex flex-col space-y-6">
+          {/* Title Fields - English first */}
           {/* English Title */}
           <FormField
             control={form.control}
             name="title_en"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>{t("news.title.en")}</FormLabel>
                 <FormControl>
                   <Input placeholder={t("news.title.en.placeholder")} {...field} />
@@ -366,31 +245,28 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
-          {/* Arabic Content */}
+          {/* Arabic Title */}
           <FormField
             control={form.control}
-            name="content_ar"
+            name="title_ar"
             render={({ field }) => (
-              <FormItem className="col-span-1 md:col-span-2">
-                <FormLabel>{t("news.content.ar")}</FormLabel>
+              <FormItem className="w-full">
+                <FormLabel>{t("news.title.ar")}</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder={t("news.content.ar.placeholder")} 
-                    className="min-h-[150px]" 
-                    {...field} 
-                  />
+                  <Input placeholder={t("news.title.ar.placeholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Content Fields - English first */}
           {/* English Content */}
           <FormField
             control={form.control}
             name="content_en"
             render={({ field }) => (
-              <FormItem className="col-span-1 md:col-span-2">
+              <FormItem className="w-full">
                 <FormLabel>{t("news.content.en")}</FormLabel>
                 <FormControl>
                   <Textarea 
@@ -404,149 +280,111 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
             )}
           />
 
-          {/* Category */}
+          {/* Arabic Content */}
           <FormField
             control={form.control}
-            name="category"
+            name="content_ar"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("news.category")}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("news.category.placeholder")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingCategories ? (
-                      <SelectItem value="loading" disabled>{t("loading.categories")}</SelectItem>
-                    ) : categories.length > 0 ? (
-                      categories.map((category) => (
+              <FormItem className="w-full">
+                <FormLabel>{t("news.content.ar")}</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder={t("news.content.ar.placeholder")} 
+                    className="min-h-[150px]" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("news.category")}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isLoadingCategories}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("news.category.placeholder")} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
                         <SelectItem key={category._id} value={category._id}>
                           {category.name[language]}
                         </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-categories" disabled>{t("no.categories.available")}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Date Field */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t("publication.date")}</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={`w-full pl-3 text-right font-normal ${
-                          !field.value && "text-muted-foreground"
-                        }`}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: ar })
-                        ) : (
-                          <span>{t("select.date")}</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Multiple Image Upload */}
-          <div className="col-span-1 md:col-span-2">
-            <FormLabel>{t("news.images")}</FormLabel>
-            <div className="mt-2 flex flex-col space-y-4">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageChange}
-                accept="image/*"
-                multiple
-                className="hidden"
-              />
-              
-              {/* Upload button - disabled if already have 4 images */}
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={triggerFileInput}
-                className="w-full h-16 border-dashed"
-                disabled={previewUrls.length >= 3}
-              >
-                {previewUrls.length > 0 
-                  ? `${t("add.image")} (${previewUrls.length}/3)` 
-                  : t("choose.image")}
-              </Button>
-              
-              {/* Image previews */}
-              {previewUrls.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <div className="relative w-full h-48 rounded-md overflow-hidden border">
-                        <img 
-                          src={url} 
-                          alt={`${t("preview")} ${index + 1}`} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full opacity-80 hover:opacity-100"
-                        onClick={() => removeImage(index)}
-                        disabled={isDeletingImage}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )}
-              
-              {!initialData && previewUrls.length === 0 && (
-                <p className="text-sm text-red-500">* {t("image.required")}</p>
+            />
+
+            {/* Date */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("publication.date")}</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={`w-full pl-3 text-left font-normal ${
+                            !field.value && "text-muted-foreground"
+                          }`}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", {
+                              locale: language === "ar" ? ar : enUS,
+                            })
+                          ) : (
+                            <span>{t("select.date")}</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>  
+            />
           </div>
-        </div>
 
-        <ConfirmDialog
-          isOpen={!!imageToDelete}
-          onClose={() => setImageToDelete(null)}
-          onConfirm={handleImageDelete}
-          title={t("confirm.delete.image.title")}
-          description={t("confirm.delete.image.description")}
-          confirmText={t("delete")}
-          cancelText={t("cancel")}
-        />
+          {/* Image Upload */}
+          <UploadMultipleImages
+            label={t("news.images")}
+            initialImages={initialData?.image || []}
+            onChange={handleImagesChange}
+            onRemove={handleImageRemove}
+            imageRequired={!initialData}
+            maxImages={3}
+          />
+        </div>
 
         <div className="flex gap-4">
           <Button 

@@ -31,21 +31,21 @@ export const getAuthHeaders = () => {
   };
 };
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: "يرجى إدخال عنوان بريد إلكتروني صالح.",
-  }),
-  password: z.string().min(8, {
-    message: "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
-  }),
-})
-
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [redirectPath, setRedirectPath] = useState("/dashboard")
   const [isLoading, setIsLoading] = useState(false)
   const { t } = useLanguage()
+  
+  const formSchema = z.object({
+    email: z.string().email({
+      message: t("email.invalid.error") || "Please enter a valid email address.",
+    }),
+    password: z.string().min(8, {
+      message: t("password.min.length.error") || "Password must be at least 8 characters.",
+    }),
+  })
   
   // Get the redirect path from URL query parameter
   useEffect(() => {

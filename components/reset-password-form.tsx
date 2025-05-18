@@ -23,23 +23,17 @@ export function ResetPasswordForm() {
   const formSchema = z
     .object({
       verificationCode: z.string().min(6, {
-        message: language === "ar"
-          ? "يجب أن يكون رمز التحقق 6 أرقام على الأقل."
-          : "Verification code must be at least 6 digits.",
+        message: t("verification.code.min.length.error") || "Verification code must be at least 6 digits.",
       }),
       password: z.string().min(8, {
-        message: language === "ar"
-          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
-          : "Password must be at least 8 characters.",
+        message: t("password.min.length.error") || "Password must be at least 8 characters.",
       }),
       confirmPassword: z.string().min(8, {
-        message: language === "ar"
-          ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
-          : "Password must be at least 8 characters.",
+        message: t("password.min.length.error") || "Password must be at least 8 characters.",
       }),
     })
     .refine((data) => data.password === data.confirmPassword, {
-      message: language === "ar" ? "كلمات المرور غير متطابقة." : "Passwords do not match.",
+      message: t("passwords.not.matching.error") || "Passwords do not match.",
       path: ["confirmPassword"],
     })
 

@@ -26,8 +26,8 @@ export function MobileNav() {
       icon: FileText,
     },
     {
-      title: t("events.management"),
-      href: "/dashboard/events",
+      title: t("members.management"),
+      href: "/dashboard/members",
       icon: Calendar,
     },
     {

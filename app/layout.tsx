@@ -48,7 +48,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head >
 
-        <link rel="icon" href="/favicon.png" sizes="any" />
+        <link rel="icon" href="./favicon.png" sizes="any" />
 
       </head>
       <body className={cairo.className}>
