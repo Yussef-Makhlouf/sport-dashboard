@@ -77,9 +77,10 @@ export function LoginForm() {
       
       // Parse the JSON response
       const data = await response.json();
-      console.log(data);
+      // console.log(data.cause);
       
       if (response.ok) {
+        
         // Successful login
         showToast.success(t, "login.success", data.message || "welcome.message")
         
@@ -109,12 +110,22 @@ export function LoginForm() {
         router.push(redirectPath)
       } else {
         // Failed login
-        showToast.error(t, "login.failed", "password.incorrect")
+        console.log(data.message);
+        
+        if (data.message === 'user not found') {
+          showToast.error(t, "login.email.not.found")
+        } else if (data.message === 'user is not active') {
+          showToast.error(t, "your.account.is.not.active")
+        } else if (data.message === 'password is incorrect') {
+          showToast.error(t, "login.password.incorrect")
+        } else {
+          showToast.error(t, "login.error.message")
+        }
         console.error("Error during login:", data)
       }
     } catch (error) {
-      showToast.error(t, "login.failed", "password.incorrect")
       console.error("Error during login:", error)
+      showToast.error(t, "login.error.message")
     } finally {
       setIsLoading(false)
     }
