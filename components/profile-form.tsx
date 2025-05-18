@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { showToast } from "@/lib/utils"
 import Cookies from 'js-cookie'
 import { UploadImage } from "@/components/upload-image"
+import { Eye, EyeOff } from "lucide-react"
 
 const profileSchema = z.object({
   userName: z.string().min(3, { message: "Name must be at least 3 characters" }),
@@ -40,6 +41,9 @@ export function ProfileForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showPasswordFields, setShowPasswordFields] = useState(false)
 
   // Get user data from cookies
   const userDataStr = Cookies.get('userData')
@@ -193,31 +197,64 @@ export function ProfileForm() {
 
           {userData?.role === "مدير" && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t("password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...form.register("password")}
-                  placeholder={t("password")}
-                />
-                {form.formState.errors.password && (
-                  <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
-                )}
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPasswordFields(!showPasswordFields)}
+                className="w-full"
+              >
+                {showPasswordFields ? t("cancel.password.update") : t("update.password")}
+              </Button>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t("confirm.password")}</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...form.register("confirmPassword")}
-                  placeholder={t("confirm.password")}
-                />
-                {form.formState.errors.confirmPassword && (
-                  <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
-                )}
-              </div>
+              {showPasswordFields && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t("password")}</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        {...form.register("password")}
+                        placeholder={t("password")}
+                        className="pl-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {form.formState.errors.password && (
+                      <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{t("confirm.password")}</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        {...form.register("confirmPassword")}
+                        placeholder={t("confirm.password")}
+                        className="pl-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {form.formState.errors.confirmPassword && (
+                      <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                    )}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
