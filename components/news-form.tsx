@@ -23,26 +23,9 @@ import { API_URL } from "@/lib/constants"
 import { UploadMultipleImages } from "@/components/upload-multiple-images"
 import { showToast } from "@/lib/utils"
 import { ConfirmDialog } from "./ui/confirm-dialog"
- 
-// Define form validation schema
-const formSchema = z.object({
-  title_ar: z.string().min(3, {
-    message: "يجب أن يكون العنوان 3 أحرف على الأقل.",
-  }),
-  title_en: z.string().min(3, {
-    message: "Title must be at least 3 characters.",
-  }),
-  content_ar: z.string().min(10, {
-    message: "يجب أن يكون المحتوى 10 أحرف على الأقل.",
-  }),
-  content_en: z.string().min(10, {
-    message: "Content must be at least 10 characters.",
-  }),
-  category: z.string().optional(),
-  date: z.date({
-    required_error: "Please select a date",
-  }),
-})
+
+
+
 
 interface Category {
   _id: string;
@@ -81,6 +64,29 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const { t, language } = useLanguage()
   const [imageToDelete, setImageToDelete] = useState<{ index: number; public_id?: string } | null>(null)
+
+
+// Define form validation schema
+const formSchema = z.object({
+  title_ar: z.string().min(3, {
+    message: t("title.ar.min.length.error")
+  }),
+  title_en: z.string().min(3, {
+    message: t("title.en.min.length.error"),
+  }),
+  content_ar: z.string().min(10, {
+    message: t("content.ar.min.length.error"),
+  }),
+  content_en: z.string().min(10, {
+    message: t("content.en.min.length.error"),
+  }),
+  category: z.string().min(3,{
+    message: t("category.is.required"),
+  }),
+  date: z.date({
+    required_error: "Please select a date",
+  }),
+})
 
   // Fetch categories when component mounts
   useEffect(() => {
@@ -406,3 +412,7 @@ export function NewsForm({ initialData }: NewsFormProps = {}) {
     </Form>
   )
 }
+function t(arg0: string): string | undefined {
+  throw new Error("Function not implemented.")
+}
+

@@ -12,10 +12,11 @@ import { toast } from "@/hooks/use-toast"
 import { API_URL } from "@/lib/constants"
 import { getAuthToken } from "@/components/login-form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { showToast } from "@/lib/utils"
+import { showToast, fetchWithTokenRefresh } from "@/lib/utils"
 import Cookies from 'js-cookie'
 import { UploadImage } from "@/components/upload-image"
 import { Eye, EyeOff } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 const profileSchema = z.object({
   userName: z.string().min(3, { message: "Name must be at least 3 characters" }),
@@ -36,8 +37,33 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>
 
+// Add refreshUserData function
+const refreshUserData = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/auth/getUser/${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `MMA ${getAuthToken()}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to refresh user data");
+    }
+
+    const data = await response.json();
+    // Update user data in cookies
+    Cookies.set('userData', JSON.stringify(data.user));
+    return data.user;
+  } catch (error) {
+    console.error('Error refreshing user data:', error);
+    throw error;
+  }
+};
+
 export function ProfileForm() {
   const { t } = useLanguage()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>("")
@@ -105,26 +131,26 @@ export function ProfileForm() {
       if (data.password) {
         formData.append("password", data.password)
       }
+      console.log(userData);
+      
+      // Use different API endpoints based on user role
+      const apiUrl = userData.role === "مدير" 
+        ? `${API_URL}/auth/update/${userData._id}`
+        : `${API_URL}/auth/updateProfile/${userData._id}`;
 
-      const response = await fetch(`${API_URL}/auth/updateProfile/${userData._id}`, {
+      const response = await fetchWithTokenRefresh(apiUrl, {
         method: "PUT",
-        headers: {
-          Authorization: `MMA ${getAuthToken()}`,
-        },
         body: formData,
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || t("user.save.error.description"))
+      if (response.ok) {
+        const updatedUser = await response.json()
+        console.log(updatedUser);
+        Cookies.set('userData', JSON.stringify(updatedUser.user))
+        showToast.success(t, "user.updated.title", "user.updated.description")
+        router.push("/dashboard")
       }
-
-      const updatedUser = await response.json()
       
-      // Update user data in cookies
-      Cookies.set('userData', JSON.stringify(updatedUser.user))
-      
-      showToast.success(t, "user.updated.title", "user.updated.description")
     } catch (error) {
       console.error('Error updating profile:', error)
       const errorMessage = error instanceof Error ? error.message : t("user.save.error.description")
