@@ -169,7 +169,7 @@ export default function DashboardPage() {
         </Card>
       </div>
       <div className="grid gap-4 md:grid-cols-1">
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>{t("upcoming.events.title")}</CardTitle>
             <CardDescription>{t("upcoming.events.description")}</CardDescription>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
           <CardContent>
             <UpcomingEvents />
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   )
