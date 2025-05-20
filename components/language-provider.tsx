@@ -97,7 +97,8 @@ const translations = {
     "create.member":" أضف عضو",
     "drag.or.upload":"  اسحب او ارفع صوره ",
     "supported.formats":"يدعم صيغ الصور المختلفه",
-
+"update.password":"تحديث كلمة السر",
+"cancel.password.update":"الغاء تحديث كلمة السر",
     // Content
     "content.overview": "نظرة عامة على المحتوى",
     "recent.news": "أحدث الأخبار",
@@ -514,7 +515,8 @@ const translations = {
     "recent.news.description": "Latest news articles published",
     "upcoming.events.title": "Upcoming Events",
     "upcoming.events.description": "Events scheduled for the next 30 days",
-
+"update.password":"update password",
+"cancel.password.update":"cancel password update",
     // News
     "add.news": "Add News",
     "create.news": "Create News Article",

@@ -101,6 +101,7 @@ export function LoginForm() {
             role: data.userUpdated.role,
             isActive: data.userUpdated.isActive,
             phoneNumber: data.userUpdated.phoneNumber,
+            image: data.userUpdated.image,
           };
           
           Cookies.set('userData', JSON.stringify(userData), { expires: 7, secure: true });

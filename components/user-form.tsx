@@ -182,24 +182,33 @@ export function UserForm({ initialData }: UserFormProps = {}) {
         const apiUrl = `${API_URL}/auth/addUser`;
         console.log("API endpoint:", apiUrl);
         
-        const userData = {
-          userName: values.name,
-          email: values.email,
-          password: values.password,
-          phoneNumber: values.phoneNumber,
-          role: values.role,
-          isActive: values.status === 'active'
-        };
-        console.log("Sending user data:", userData);
+        // Use FormData for new user creation to handle image upload
+        const formData = new FormData();
+        formData.append('userName', values.name);
+        formData.append('email', values.email);
+        formData.append('password', values.password);
+        formData.append('phoneNumber', values.phoneNumber);
+        formData.append('role', values.role);
+        formData.append('isActive', values.status === 'active' ? 'true' : 'false');
+        
+        // Handle image upload
+        if (imageFile) {
+          formData.append('image', imageFile);
+        } else if (values.image && values.image.secure_url) {
+          // If we have an existing image URL but no new file, send the URL
+          formData.append('imageUrl', values.image.secure_url);
+          formData.append('imageId', values.image.public_id || '');
+        }
+        
+        console.log("Sending user data with FormData");
         
         try {
           const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
               Authorization: `MMA ${getAuthToken()}`,
             },
-            body: JSON.stringify(userData),
+            body: formData,
           });
           
           console.log("API response status:", response.status);
