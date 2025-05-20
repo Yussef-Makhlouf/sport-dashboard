@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -14,13 +14,24 @@ import { getAuthToken } from "@/components/login-form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { showToast } from "@/lib/utils"
 import Cookies from 'js-cookie'
+import { UploadImage } from "@/components/upload-image"
 
 const profileSchema = z.object({
   userName: z.string().min(3, { message: "Name must be at least 3 characters" }),
   email: z.string().email({ message: "Invalid email address" }),
   phoneNumber: z.string().min(0,{ message: "Invalid phone number" }),
   role: z.string(),
-})
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  if (data.password || data.confirmPassword) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 type ProfileFormValues = z.infer<typeof profileSchema>
 
@@ -35,6 +46,13 @@ export function ProfileForm() {
   const userData = userDataStr ? JSON.parse(userDataStr) : null
   console.log(userData);
   
+  // Initialize preview URL from user data
+  useEffect(() => {
+    if (userData?.image?.secure_url) {
+      setPreviewUrl(userData.image.secure_url)
+    }
+  }, [userData])
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -42,16 +60,32 @@ export function ProfileForm() {
       email: userData?.email || "",
       phoneNumber: userData?.phoneNumber || "",
       role: userData?.role || "",
+      password: "",
+      confirmPassword: "",
     },
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleImageChange = (file: File | null) => {
+    setSelectedImage(file)
     if (file) {
+// <<<<<<< general-modifications
+//       setPreviewUrl(URL.createObjectURL(file))
+// =======
       setSelectedImage(file)
-      setPreviewUrl(URL.createObjectURL(file))
+      // Create a URL for the selected image
+      const imageUrl = URL.createObjectURL(file)
+      setPreviewUrl(imageUrl)
     }
   }
+
+  // Clean up the object URL when component unmounts or when previewUrl changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsLoading(true)
@@ -63,6 +97,9 @@ export function ProfileForm() {
       formData.append("role", data.role)
       if (selectedImage) {
         formData.append("image", selectedImage)
+      }
+      if (data.password) {
+        formData.append("password", data.password)
       }
 
       const response = await fetch(`${API_URL}/auth/updateProfile/${userData._id}`, {
@@ -100,22 +137,11 @@ export function ProfileForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={previewUrl || userData?.image?.secure_url} alt={userData?.userName} />
-            <AvatarFallback>{userData?.userName?.substring(0, 2)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <Label htmlFor="image">{t("profile.image")}</Label>
-            <Input
-              id="image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="mt-2"
-            />
-          </div>
-        </div>
+        <UploadImage
+          label={t("profile.image")}
+          initialImage={userData?.image?.secure_url}
+          onChange={handleImageChange}
+        />
 
         <div className="grid gap-4">
           <div className="space-y-2">
@@ -164,6 +190,36 @@ export function ProfileForm() {
               className="bg-muted cursor-not-allowed"
             />
           </div>
+
+          {userData?.role === "مدير" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password">{t("password")}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  {...form.register("password")}
+                  placeholder={t("password")}
+                />
+                {form.formState.errors.password && (
+                  <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t("confirm.password")}</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...form.register("confirmPassword")}
+                  placeholder={t("confirm.password")}
+                />
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
