@@ -17,26 +17,8 @@ export const metadata: Metadata = {
   title: "UAEMMAF - لوحة التحكم",
   description: "لوحة تحكم لإدارة الأخبار والفعاليات الرياضية",
   icons: {
-    icon: [
-      {
-        url: "/favicon.png",
-        sizes: "32x32",
-        type: "image/png",
-      },
-      {
-        url: "/favicon.png",
-        sizes: "16x16",
-        type: "image/png",
-      },
-    ],
-    apple: [
-      {
-        url: "/favicon.png",
-        sizes: "180x180",
-        type: "image/png",
-      },
-    ],
-  },
+    icon: "/favicon.png"
+  }
 }
 
 export default function RootLayout({
@@ -46,11 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <head >
+     
 
-        <link rel="icon" href="./favicon.png" sizes="any" />
-
-      </head>
       <body className={cairo.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <LanguageProvider>
