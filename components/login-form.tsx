@@ -116,7 +116,7 @@ export function LoginForm() {
           showToast.error(t, "login.email.not.found")
         } else if (data.message === 'user is not active') {
           showToast.error(t, "your.account.is.not.active")
-        } else if (data.message === 'password is incorrect') {
+        } else if (data.message === 'password incorrect') {
           showToast.error(t, "login.password.incorrect")
         } else {
           showToast.error(t, "login.error.message")

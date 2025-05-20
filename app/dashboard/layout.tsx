@@ -10,6 +10,9 @@ import { AuthWrapper } from "@/components/auth-wrapper"
 export const metadata: Metadata = {
   title: "dashboard",
   description: "dashboard",
+  icons: {
+    icon: "/favicon.png"
+  }
 }
 
 export default function DashboardLayout({

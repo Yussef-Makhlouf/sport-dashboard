@@ -68,12 +68,8 @@ export function UsersTable() {
         const userDataStr = Cookies.get('userData')
         const currentUser = userDataStr ? JSON.parse(userDataStr) : null
         
-        // Filter out the current user from the list
-        const filteredUsers = data.users.filter((user: User) => 
-          user._id !== currentUser?._id
-        )
-        
-        setUsers(filteredUsers)
+        // Set all users including current user
+        setUsers(data.users)
       } catch (error) {
         console.error('Error fetching users:', error)
         toast({
@@ -98,15 +94,23 @@ export function UsersTable() {
     if (!itemToDelete) return
 
     try {
-      const response = await fetchWithTokenRefresh(`${API_URL}/auth/${itemToDelete}`, {
-        method: 'DELETE',
-      });
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5uYWRlci5uYWJpbGwuNjVAZ21haWwuY29tIiwiX2lkIjoiNjgxZjlmOTBhZjI0NmNjMTNhMWIyODFjIiwiaWF0IjoxNzQ3NTc3NTgxLCJleHAiOjE3NDc1ODExODF9.kCRyTMkoyBGbdwGgspePoXuWn0un_CYZi3xcbVUSoCY
+      const response = await fetchWithTokenRefresh(
+        `${API_URL}/auth/${itemToDelete}`,
+        {
+          method: 'DELETE',
+        },
+        0,
+        t
+      );
+
       if (!response.ok) {
         const errorData = await response.json();
+        // console.log(errorData);
+        // console.log("WWWW",errorData.message.message);
         
         if (errorData.message === "UnAuthorized to access this api") {
           throw new Error(t("unauthorized.error"));
+
         }
         throw new Error(errorData.message || t("user.delete.error.description"));
       }
@@ -160,16 +164,25 @@ export function UsersTable() {
       header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("user")}</div>,
       cell: ({ row }) => {
         const user = row.original
-        console.log(user);
+        const userDataStr = Cookies.get('userData')
+        const currentUser = userDataStr ? JSON.parse(userDataStr) : null
+        const isCurrentUser = currentUser && user._id === currentUser._id
         
         return (
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
+            <Avatar className={`h-9 w-9 ${isCurrentUser ? 'ring-2 ring-[#BB2121]' : ''}`}>
               <AvatarImage src={user.image?.secure_url} alt={user.userName} />
               <AvatarFallback>{user.userName.substring(0, 2)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{user.userName}</div>
+              <div className="font-medium flex items-center gap-2">
+                {user.userName}
+                {isCurrentUser && (
+                  <Badge variant="default" className="bg-[#BB2121]">
+                    {t("current.user")}
+                  </Badge>
+                )}
+              </div>
               <div className="text-sm text-muted-foreground">{user.email}</div>
             </div>
           </div>
