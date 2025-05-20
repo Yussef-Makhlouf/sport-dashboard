@@ -52,6 +52,13 @@ const refreshUserData = async (userId: string) => {
     }
 
     const data = await response.json();
+    console.log("Refreshed user data:", data.user);
+    
+    // تأكد من أن بيانات المستخدم تتضمن الصورة
+    if (data.user && !data.user.image && data.user.image === undefined) {
+      console.warn("Image data is missing in the user data");
+    }
+    
     // Update user data in cookies
     Cookies.set('userData', JSON.stringify(data.user));
     return data.user;
@@ -131,7 +138,7 @@ export function ProfileForm() {
       if (data.password) {
         formData.append("password", data.password)
       }
-      console.log(userData);
+      console.log("Current user data:", userData);
       
       // Use different API endpoints based on user role
       const apiUrl = userData.role === "مدير" 
@@ -145,8 +152,33 @@ export function ProfileForm() {
 
       if (response.ok) {
         const updatedUser = await response.json()
-        console.log(updatedUser);
+        console.log("Updated user data from server:", updatedUser);
+        
+        // تأكد من وجود بيانات الصورة
+        if (updatedUser.user && updatedUser.user.image) {
+          console.log("Image data in updated user:", updatedUser.user.image);
+        } else {
+          console.warn("No image data in updated user response");
+        }
+        
+        // تحديث بيانات المستخدم في الكوكيز
         Cookies.set('userData', JSON.stringify(updatedUser.user))
+        
+        // تحديث بيانات المستخدم من الخادم للتأكد من تحديث الصورة
+        try {
+          const refreshedUser = await refreshUserData(userData._id)
+          console.log("Refreshed user data after update:", refreshedUser);
+          
+          // تأكد من وجود بيانات الصورة بعد التحديث
+          if (refreshedUser && refreshedUser.image) {
+            console.log("Image data after refresh:", refreshedUser.image);
+          } else {
+            console.warn("No image data in refreshed user data");
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing user data after update:", refreshError);
+        }
+        
         showToast.success(t, "user.updated.title", "user.updated.description")
         router.push("/dashboard")
       }

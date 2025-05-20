@@ -97,7 +97,8 @@ const translations = {
     "create.member":" أضف عضو",
     "drag.or.upload":"  اسحب او ارفع صوره ",
     "supported.formats":"يدعم صيغ الصور المختلفه",
-
+"update.password":"تحديث كلمة السر",
+"cancel.password.update":"الغاء تحديث كلمة السر",
     // Content
     "content.overview": "نظرة عامة على المحتوى",
     "recent.news": "أحدث الأخبار",
@@ -423,6 +424,11 @@ const translations = {
     "location.en.min.length.error": "يجب أن يكون الموقع بالإنجليزية 5 أحرف على الأقل.",
     "category.required": "يرجى اختيار تصنيف.",
     "unauthorized.error": "غير مصرح لك بتنفيذ هذة العملية",
+    "this.month": "هذا الشهر",
+    "latest.news": "أحدث الأخبار شهرياً",
+    "news.increase": "زيادة في الأخبار",
+    "news.decrease": "انخفاض في الأخبار",
+    "no.change": "لا يوجد تغيير"
   },
   en: {
     // Auth
@@ -442,7 +448,7 @@ const translations = {
     "enter.credentials": "Enter your credentials to access the dashboard",
     "reset.password": "Reset Password",
     "reset.password.description": "Enter a new password for your account",
-
+    "latest.news": "Latest News Monthly",
     // Dashboard
     dashboard: "Dashboard",
     "news.management": "News Management",
@@ -509,7 +515,8 @@ const translations = {
     "recent.news.description": "Latest news articles published",
     "upcoming.events.title": "Upcoming Events",
     "upcoming.events.description": "Events scheduled for the next 30 days",
-
+"update.password":"update password",
+"cancel.password.update":"cancel password update",
     // News
     "add.news": "Add News",
     "create.news": "Create News Article",
@@ -826,6 +833,10 @@ const translations = {
     "location.en.min.length.error": "English location must be at least 5 characters.",
     "category.required": "Please select a category.",
     "unauthorized.error": "You are not authorized to do this process",
+    "this.month": "this month",
+    "news.increase": "increase in news",
+    "news.decrease": "decrease in news",
+    "no.change": "no change"
   },
 }
 

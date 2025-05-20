@@ -179,7 +179,12 @@ const formSchema = z.object({
       Object.entries(values).forEach(([key, value]) => {
         if (value) {
           if (key === 'date') {
-            formData.append(key, (value as Date).toISOString())
+            // إزالة معلومات الوقت من التاريخ وإرسال التاريخ فقط بصيغة YYYY-MM-DD
+            const dateOnly = new Date(value as Date)
+            const year = dateOnly.getFullYear()
+            const month = String(dateOnly.getMonth() + 1).padStart(2, '0')
+            const day = String(dateOnly.getDate()).padStart(2, '0')
+            formData.append(key, `${year}-${month}-${day}`)
           } else {
             formData.append(key, String(value))
           }
