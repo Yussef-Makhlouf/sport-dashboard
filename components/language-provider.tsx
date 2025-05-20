@@ -129,6 +129,7 @@ const translations = {
     "news.images": "صور الخبر (الحد الأقصى 3 صور)",
     "upload.image": "رفع صورة",
     "add.image": "إضافة صورة",
+    "images.added": "صورة مضافة",
     "choose.image": "اختر صورة",
     "change.image": "تغيير الصورة",
     "no.image.uploaded": "لم يتم رفع صورة",
@@ -356,9 +357,10 @@ const translations = {
     
     // News form validation errors
     "title.ar.min.length.error": "يجب أن يكون العنوان 3 أحرف على الأقل.",
-    "title.en.min.length.error": "يجب أن يكون العنوان بالإنجليزية 3 أحرف على الأقل.",
+    "title.en.min.length.error": "يجب أن يكون العنوان 3 أحرف على الأقل.",
     "content.ar.min.length.error": "يجب أن يكون المحتوى 10 أحرف على الأقل.",
     "content.en.min.length.error": "يجب أن يكون المحتوى بالإنجليزية 10 أحرف على الأقل.",
+    "category.is.required":"يجب اختيار نوع الخبر",
 
     // Toast notifications
     "please.wait": "يرجى الانتظار...",
@@ -372,6 +374,7 @@ const translations = {
     "email.not.found": "البريد الإلكتروني غير مسجل في النظام",
     "your.account.is.not.active" :"هذا الحساب غير مفعل",
     "connection.error": "خطأ في الاتصال",
+    "image.deleted.success": "تم حذف الصورة بنجاح",
     "server.connection.error": "حدث خطأ أثناء محاولة الاتصال بالخادم",
     "saving.settings": "جاري حفظ الإعدادات",
     "settings.saved": "تم حفظ الإعدادات",
@@ -529,6 +532,7 @@ const translations = {
     "select.date": "Select date",
     image: "Image",
     "news.images": "News Images (Max 3 images)",
+    "images.added": "Images Added",
     "upload.image": "Upload Image",
     "add.image": "Add Image",
     "choose.image": "Choose Image",
@@ -765,6 +769,7 @@ const translations = {
     "title.en.min.length.error": "English title must be at least 3 characters.",
     "content.ar.min.length.error": "Arabic content must be at least 10 characters.",
     "content.en.min.length.error": "English content must be at least 10 characters.",
+    "category.is.required":"please choose news type",
 
     // Toast notifications
     "please.wait": "Please wait...",
@@ -776,6 +781,7 @@ const translations = {
     // "password.incorrect": "Password is incorrect. Please try again",
     "login.error.message": "An error occurred during login",
     "login.email.not.found": "email not found",
+    "image.deleted.success": "Image deleted successfully",
     "your.account.is.not.active": "Your account is not active",
     "login.password.incorrect": "Password is incorrect. Please try again",
     "email.not.found": "Email address is not registered in the system",

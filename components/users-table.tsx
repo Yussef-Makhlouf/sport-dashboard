@@ -98,15 +98,23 @@ export function UsersTable() {
     if (!itemToDelete) return
 
     try {
-      const response = await fetchWithTokenRefresh(`${API_URL}/auth/${itemToDelete}`, {
-        method: 'DELETE',
-      });
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5uYWRlci5uYWJpbGwuNjVAZ21haWwuY29tIiwiX2lkIjoiNjgxZjlmOTBhZjI0NmNjMTNhMWIyODFjIiwiaWF0IjoxNzQ3NTc3NTgxLCJleHAiOjE3NDc1ODExODF9.kCRyTMkoyBGbdwGgspePoXuWn0un_CYZi3xcbVUSoCY
+      const response = await fetchWithTokenRefresh(
+        `${API_URL}/auth/${itemToDelete}`,
+        {
+          method: 'DELETE',
+        },
+        0,
+        t
+      );
+
       if (!response.ok) {
         const errorData = await response.json();
+        // console.log(errorData);
+        // console.log("WWWW",errorData.message.message);
         
         if (errorData.message === "UnAuthorized to access this api") {
           throw new Error(t("unauthorized.error"));
+
         }
         throw new Error(errorData.message || t("user.delete.error.description"));
       }
@@ -160,7 +168,7 @@ export function UsersTable() {
       header: () => <div className={language === 'ar' ? 'text-right' : 'text-left'}>{t("user")}</div>,
       cell: ({ row }) => {
         const user = row.original
-        console.log(user);
+        // console.log(user);
         
         return (
           <div className="flex items-center gap-3">
