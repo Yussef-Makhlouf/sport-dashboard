@@ -4,7 +4,6 @@ import { toast } from "@/hooks/use-toast"
 import Cookies from "js-cookie"
 import { API_URL } from "./constants"
 import { getAuthToken } from "@/components/login-form"
-import { useLanguage } from "@/components/language-provider"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
