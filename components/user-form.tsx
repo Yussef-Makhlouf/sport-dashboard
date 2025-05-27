@@ -186,7 +186,7 @@ export function UserForm({ initialData }: UserFormProps = {}) {
         const formData = new FormData();
         formData.append('userName', values.name);
         formData.append('email', values.email);
-        formData.append('password', values.password);
+        formData.append('password', values.password || '');
         formData.append('phoneNumber', values.phoneNumber);
         formData.append('role', values.role);
         formData.append('isActive', values.status === 'active' ? 'true' : 'false');
